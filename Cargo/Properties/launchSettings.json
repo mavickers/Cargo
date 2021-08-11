@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "Cargo": {
+      "commandName": "Project"
+    }
+  }
+}
