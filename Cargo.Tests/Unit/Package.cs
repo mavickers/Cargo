@@ -1,28 +1,22 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using Cargo.Tests.Unit.Common;
 using Xunit;
 
 namespace Cargo.Tests.Unit
 {
     public class Package
     {
-        public class ContentModel
-        {
-            public string String1 { get; set; }
-            public string String2 { get; set; }
-            public string String3 { get; set; }
-        }
-
         [Fact]
         public void Instantiation()
         {
-            Cargo.Package<ContentModel> package;
+            Package<ContentModel1> package;
 
-            var contents = new ContentModel { String2 = string.Empty, String3 = "test" };
+            var contents = new ContentModel1();
 
-            Assert.Throws<ArgumentException>(() => package = new Package<ContentModel>());
+            Assert.Throws<ArgumentException>(() => package = new Package<ContentModel1>());
 
-            package = new Package<ContentModel>(contents);
+            package = new Package<ContentModel1>(contents);
 
             Assert.False(package.IsAborted);
             Assert.False(package.IsErrored);

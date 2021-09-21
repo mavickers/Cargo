@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Cargo.Tests.Unit.Common
+{
+    public class ContentModel1
+    {
+        public string String1 { get; set; }
+        public string String2 { get; set; }
+        public string String3 { get; set; }
+        public int Int1 { get; set; }
+
+        public ContentModel1()
+        {
+            String2 = string.Empty;
+            String3 = "TESTING";
+            Int1 = 0;
+        }
+    }
+}

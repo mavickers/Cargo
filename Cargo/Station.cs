@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Cargo
 {
@@ -71,7 +72,6 @@ namespace Cargo
 
         protected T Contents => _package.Contents;
         protected Station.Result<T> LastResult => _package.Results.Last();
-        public static Type Type => typeof(Station<T>);
 
         public bool IsRepeat => _repeat;
         public bool NotRepeat => !_repeat;
