@@ -15,7 +15,7 @@ namespace Cargo
             Aborted,
         }
 
-        private static readonly Dictionary<Type, Output> OutputMaps = new()
+        private static readonly Dictionary<Type, Output> OutputMaps = new Dictionary<Type, Output>
         {
             { typeof(AbortException), Output.Aborted },
             { typeof(SkipException), Output.Skipped }
@@ -25,22 +25,15 @@ namespace Cargo
         {
             public static Result<T> New<T>(Station<T> station, Output output, Exception exception = null) where T : new()
             {
-                return new()
-                {
-                    _station = station,
-                    _output = output,
-                    _exception = exception
-                };
-
+                return new Result<T>(station, output, exception);
             }
         }
 
         public class Result<T>
         {
-
-            internal Station<T> _station { get; init; }
-            internal Output _output { get; init; }
-            internal Exception _exception { get; init; }
+            internal Station<T> _station { get; }
+            internal Output _output { get; }
+            internal Exception _exception { get; }
 
             public Exception Exception => _exception;
             public Type Station => _station?.GetType();
@@ -49,6 +42,13 @@ namespace Cargo
             public bool WasSkipped => _output == Output.Skipped;
             public bool WasSuccess => _output == Output.Succeeded;
             public bool WasUnknown => _output == Output.Unknown;
+
+            internal Result(Station<T> station, Output output, Exception exception = null)
+            {
+                _station = station ?? throw new ArgumentException(nameof(station));
+                _output = output;
+                _exception = exception;
+            }
         }
 
         public class AbortException : Exception
@@ -64,6 +64,8 @@ namespace Cargo
 
     public abstract class Station<T>
     {
+        // package value will be injected by the bus when it runs
+
         private Package<T> _package { get; set; }
         private bool _repeat { get; set; }
 

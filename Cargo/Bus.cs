@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using static Cargo.Station.Output;
 
@@ -19,7 +20,7 @@ namespace Cargo
     {
         private Type _finalStation;
         private Package<T> _package;
-        private readonly List<Type> _stations = new();
+        private readonly List<Type> _stations = new List<Type>();
 
         public Package<T> Package => _package;
 
@@ -34,13 +35,16 @@ namespace Cargo
             if (packageProperty == null) throw new Exception("Unable to access package property");
 
             _package = new Package<T>(content, logger);
-            callback ??= args => args;
+            callback = callback ?? (arg => arg);
 
             while (currentStationIndex < stationList.Count)
             {
-                // if the abort flag is up and we don't have a final station, bail
-                // out of the loop; 
-                if (_package.IsAborted && stationList.Last() != _finalStation) break;
+                // if the package indicates that we're aborted and we don't
+                // have a final station, break out of the loop; setting the 
+                // current station to the final station is handled at the bottom
+                // of the loop.
+
+                //if (_package.IsAborted && stationList.Last() != _finalStation) break;
 
                 var currentStation = (Station<T>) Activator.CreateInstance(stationList[currentStationIndex]);
                 
@@ -52,7 +56,7 @@ namespace Cargo
                 {
                     currentStation.Process();
 
-                    var result = Station.Result.New<T>(currentStation, Succeeded);
+                    var result = Station.Result.New(currentStation, Succeeded);
 
                     _package.Results.Add(result);
                 }
@@ -71,12 +75,16 @@ namespace Cargo
                     _package.Results.Add(result);
                 }
 
-                // if we are repeating the station then do not change the index
+                // if we are repeating the station then do not change the index and continue.
                 if (currentStation.IsRepeat) continue;
 
-                currentStationIndex = _package.LastStationResult.WasAborted ? stationList.Count - 1 : currentStationIndex + 1;
-
-                //if (!currentStation.IsRepeat || _package.Results.Last().WasSkipped) currentStationIndex++;
+                // if we just aborted and we have a final station, set the next run to the final
+                // station; otherwise set the index outside the loop so no more stations are processed.
+                if (_package.LastStationResult.WasAborted) { currentStationIndex = stationList.Count + (stationList.Last() == _finalStation ? -1 : 1); continue; }
+                
+                // just process the next station; if we've arrived at the last or final
+                // station we'll bail out of the loop.
+                currentStationIndex++;
             }
 
             return callback(content);
@@ -84,7 +92,7 @@ namespace Cargo
 
         public static Bus<T> New()
         {
-            return new();
+            return new Bus<T>();
         }
 
         public Bus<T> WithFinalStation(Type station)

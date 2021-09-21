@@ -10,7 +10,7 @@ namespace Cargo
     {
         private bool _abort { get; set; }
         private Exception _abortedWith { get; set; }
-        private Exception _exception { get; set; }
+        private Exception _exception { get; }
         private Guid _executionId { get; }
         private readonly ILogger<T> _logger;
         private readonly T _package;
@@ -21,7 +21,7 @@ namespace Cargo
         internal Guid ExecutionId => _executionId;
         public bool IsAborted => _abort;
         public bool IsErrored => _exception != null;
-        public Station.Result<T> LastStationResult => Results?.Last();
+        public Station.Result<T> LastStationResult => Results?.LastOrDefault();
         public ILogger Logger => _logger;
         public List<Station.Result<T>> Results { get; }
 
