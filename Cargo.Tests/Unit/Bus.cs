@@ -1,3 +1,5 @@
+using System;
+using Cargo.Tests.Unit.Common;
 using Xunit;
 
 namespace Cargo.Tests.Unit
@@ -7,11 +9,10 @@ namespace Cargo.Tests.Unit
         [Fact]
         public void Instantiation()
         {
-            var bus = new Cargo.Bus();
-
+            var bus = Cargo.Bus.New<ContentModel1>();
 
             Assert.NotNull(bus);
-
+            Assert.Null(bus.Package);
         }
     }
 }

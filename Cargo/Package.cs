@@ -6,6 +6,14 @@ using System.Linq;
 
 namespace Cargo
 {
+    public static class Package
+    {
+        public static Package<T> New<T>(params object[] parameters) where T : new()
+        {
+            return Package<T>.New(parameters);
+        }
+    }
+
     public class Package<T>
     {
         private bool _abort { get; set; }
@@ -26,7 +34,7 @@ namespace Cargo
         public List<Station.Result<T>> Results { get; }
 
 
-        public Package(params object[] parameters)
+        private Package(params object[] parameters)
         {
             if (parameters.Count(p => p?.GetType() == typeof(T)) != 1) throw new ArgumentException($"Package parameters must contain a single instance of {typeof(T).FullName}");
 
@@ -68,6 +76,11 @@ namespace Cargo
             if (result == null) throw new ArgumentException("AddResult \"result\" parameter is null");
 
             Results.Add(result);
+        }
+
+        public static Package<T> New(params object[] parameters)
+        {
+            return new Package<T>(parameters);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Cargo
@@ -75,6 +76,8 @@ namespace Cargo
 
         public bool IsRepeat => _repeat;
         public bool NotRepeat => !_repeat;
+
+        public static Type Type => MethodBase.GetCurrentMethod().DeclaringType;
 
         public void Abort(string message = "Aborted")
         {

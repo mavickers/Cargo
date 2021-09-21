@@ -14,9 +14,9 @@ namespace Cargo.Tests.Unit
 
             var contents = new ContentModel1();
 
-            Assert.Throws<ArgumentException>(() => package = new Package<ContentModel1>());
+            Assert.Throws<ArgumentException>(() => package = Cargo.Package.New<ContentModel1>());
 
-            package = new Package<ContentModel1>(contents);
+            package = Cargo.Package.New<ContentModel1>(contents);
 
             Assert.False(package.IsAborted);
             Assert.False(package.IsErrored);

@@ -10,7 +10,7 @@ namespace Cargo.Tests.Unit
         {
             public override void Process()
             {
-
+                throw new NotImplementedException();
             }
         }
 
@@ -25,8 +25,6 @@ namespace Cargo.Tests.Unit
             Assert.Null(result.Exception);
             Assert.True(result.WasSkipped);
 
-            station.Process();
-
             result = Cargo.Station.Result.New(station, Cargo.Station.Output.Aborted, new Exception("testing"));
 
             Assert.NotNull(result.Exception);
@@ -34,6 +32,7 @@ namespace Cargo.Tests.Unit
             Assert.Equal("testing", result.Exception.Message);
 
             Assert.Throws<NullReferenceException>(() => station.Abort());
+            Assert.Throws<NotImplementedException>(() => station.Process());
         }
 
         [Fact]
@@ -42,6 +41,14 @@ namespace Cargo.Tests.Unit
             var station = new TestStation1();
 
             Assert.Throws<Cargo.Station.SkipException>(() => station.Skip());
+            
+            station.Repeat();
+
+            Assert.True(station.IsRepeat);
+
+            station.NoRepeat();
+
+            Assert.False(station.IsRepeat);
         }
     }
 }
