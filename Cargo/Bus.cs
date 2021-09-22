@@ -17,6 +17,7 @@ namespace Cargo
 
     public class Bus<TPackage> where TPackage : new()
     {
+        private bool _abortOnError = true;
         private Type _finalStation;
         private Package<TPackage> _package;
         private readonly List<Type> _stations = new List<Type>();
@@ -24,6 +25,20 @@ namespace Cargo
         public Package<TPackage> Package => _package;
 
         private Bus() { }
+
+        public Bus<TPackage> AbortOnError()
+        {
+            _abortOnError = true;
+
+            return this;
+        }
+
+        public Bus<TPackage> NoAbortOnError()
+        {
+            _abortOnError = false;
+
+            return this;
+        }
 
         public TPackage Go(TPackage content, ILogger<TPackage> logger = null, Func<TPackage, TPackage> callback = null)
         {
@@ -79,9 +94,14 @@ namespace Cargo
                 // if we are repeating the station then do not change the index and continue.
                 if (currentStation.IsRepeat) continue;
 
-                // if we just aborted and we have a final station, set the next run to the final
+                // if we just aborted and we have a final station, or if the station threw an exception
+                // and the bus is configured to abort on exception then set the next run to the final
                 // station; otherwise set the index outside the loop so no more stations are processed.
-                if (_package.LastStationResult.WasAborted) { currentStationIndex = stationList.Count + (stationList.Last() == _finalStation ? -1 : 1); continue; }
+                if (_package.LastStationResult.WasAborted || (_package.LastStationResult.WasFail && _abortOnError))
+                {
+                    currentStationIndex = stationList.Count + (stationList.Last() == _finalStation ? -1 : 1); 
+                    continue;
+                }
                 
                 // just process the next station; if we've arrived at the last or final
                 // station we'll bail out of the loop.
@@ -96,11 +116,11 @@ namespace Cargo
             return new Bus<TPackage>();
         }
 
-        public Bus<TPackage> WithFinalStation(Type station)
+        public Bus<TPackage> WithFinalStation<TStation>()
         {
-            if (station?.BaseType?.FullName != typeof(Station<TPackage>).FullName) throw new ArgumentException("\"station\" parameter is invalid");
+            if (typeof(TStation)?.BaseType?.FullName != typeof(Station<TPackage>).FullName) throw new ArgumentException("\"station\" parameter is invalid");
 
-            _finalStation = station;
+            _finalStation = typeof(TStation);
 
             return this;
         }

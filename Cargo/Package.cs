@@ -28,7 +28,7 @@ namespace Cargo
         public Exception Exception => _exception;
         internal Guid ExecutionId => _executionId;
         public bool IsAborted => _abort;
-        public bool IsErrored => _exception != null;
+        public bool IsErrored => Results?.Any(r => r.WasFail) ?? false;
         public Station.Result<T> LastStationResult => Results?.LastOrDefault();
         public ILogger Logger => _logger;
         public List<Station.Result<T>> Results { get; }
