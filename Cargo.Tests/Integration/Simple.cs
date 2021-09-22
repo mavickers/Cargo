@@ -1,18 +1,19 @@
 ﻿using Cargo.Tests.Integration.Common;
+using Cargo.Tests.Integration.Stations;
 using Xunit;
 
 namespace Cargo.Tests.Integration
 {
-    public class Simple
+    public class SimpleTests
     {
         [Fact]
         public void Scenario1()
         {
             var content = new ContentModel1();
-            var bus = Cargo.Bus.New<ContentModel1>()
-                               .WithStation<Stations.Simple.Station1>()
-                               .WithStation<Stations.Simple.Station2>()
-                               .WithStation<Stations.Simple.Station3>();
+            var bus = Bus.New<ContentModel1>()
+                               .WithStation<Simple.Station1>()
+                               .WithStation<Simple.Station2>()
+                               .WithStation<Simple.Station3>();
 
             bus.Go(content);
 
