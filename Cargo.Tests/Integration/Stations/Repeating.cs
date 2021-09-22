@@ -1,9 +1,8 @@
-﻿using System;
-using Cargo.Tests.Integration.Common;
+﻿using Cargo.Tests.Integration.Common;
 
 namespace Cargo.Tests.Integration.Stations
 {
-    public class Finalize
+    public class Repeating
     {
         public class Station1 : Station<ContentModel2>
         {
@@ -17,7 +16,9 @@ namespace Cargo.Tests.Integration.Stations
         {
             public override void Process()
             {
-                Skip();
+                Contents.IntVal += 2;
+
+                if (Contents.IntVal <= 100) Repeat();
             }
         }
 
@@ -25,7 +26,7 @@ namespace Cargo.Tests.Integration.Stations
         {
             public override void Process()
             {
-                Abort();
+                Contents.IntVal += 3;
             }
         }
 
@@ -33,23 +34,9 @@ namespace Cargo.Tests.Integration.Stations
         {
             public override void Process()
             {
-                Contents.IntVal += 4;
-            }
-        }
+                Contents.IntVal += 1;
 
-        public class Station5 : Station<ContentModel2>
-        {
-            public override void Process()
-            {
-                throw new Exception("Testing");
-            }
-        }
-
-        public class FinalStation : Station<ContentModel2>
-        {
-            public override void Process()
-            {
-                Contents.IntVal += 20;
+                if (Contents.IntVal <= 1000) Repeat();
             }
         }
     }

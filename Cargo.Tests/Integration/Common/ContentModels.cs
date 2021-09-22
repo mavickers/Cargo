@@ -14,4 +14,9 @@
             Int1 = 0;
         }
     }
+
+    public class ContentModel2
+    {
+        public int IntVal { get; set; } = 0;
+    }
 }

@@ -1,14 +1,10 @@
 ﻿using System.Linq;
+using Cargo.Tests.Integration.Common;
 using Xunit;
 using static Cargo.Tests.Integration.Stations.Finalize;
 
 namespace Cargo.Tests.Integration
 {
-    public class ContentModel
-    {
-        public int IntVal { get; set; }
-    }
-    
     public class Finalize
     {
         /// <summary>
@@ -17,8 +13,8 @@ namespace Cargo.Tests.Integration
         [Fact]
         public void Scenario1()
         {
-            var content = new ContentModel { IntVal = 0 };
-            var bus = Bus.New<ContentModel>()
+            var content = new ContentModel2();
+            var bus = Bus.New<ContentModel2>()
                          .WithStation<Station1>()
                          .WithStation<Station2>()
                          .WithStation<Station4>()
@@ -41,13 +37,15 @@ namespace Cargo.Tests.Integration
         [Fact]
         public void Scenario2()
         {
-            var content = new ContentModel { IntVal = 0 };
-            var bus = Bus.New<ContentModel>()
+            var content = new ContentModel2();
+            var bus = Bus.New<ContentModel2>()
                          .WithStation<Station1>()
                          .WithStation<Station3>()
                          .WithStation<Station2>()
                          .WithStation<Station4>()
                          .WithFinalStation<FinalStation>();
+
+
 
             bus.Go(content);
 
@@ -64,8 +62,8 @@ namespace Cargo.Tests.Integration
         [Fact]
         public void Scenario3()
         {
-            var content = new ContentModel { IntVal = 0 };
-            var bus = Bus.New<ContentModel>()
+            var content = new ContentModel2();
+            var bus = Bus.New<ContentModel2>()
                          .WithStation<Station1>()
                          .WithStation<Station2>()
                          .WithStation<Station4>()
@@ -81,7 +79,7 @@ namespace Cargo.Tests.Integration
             Assert.False(bus.Package.IsAborted);
             Assert.Equal(29, content.IntVal);
 
-            bus.NoAbortOnError().Go(content);
+            bus.WithNoAbortOnError().Go(content);
 
             Assert.True(bus.Package.IsErrored);
             Assert.False(bus.Package.IsAborted);

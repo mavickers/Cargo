@@ -3,66 +3,59 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using static Cargo.Station.Output;
 
 namespace Cargo
 {
     public static class Bus
     {
-        public static Bus<T> New<T>() where T : new()
+        public static Bus<TContent> New<TContent>() where TContent : new()
         {
-            return Bus<T>.New();
+            return Bus<TContent>.New();
+        }
+
+        public static Bus<TContent> SetAndReturn<TContent>(this Bus<TContent> bus, string propertyName, object value) where TContent : new()
+        {
+            var property = typeof(Bus<TContent>).GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (property == null) throw new Exception($"Cound not find property named '{propertyName}'");
+
+            property.SetValue(bus, value);
+
+            return bus;
         }
     }
 
-    public class Bus<TPackage> where TPackage : new()
+    public class Bus<TContent> where TContent : new()
     {
-        private bool _abortOnError = true;
-        private Type _finalStation;
-        private Package<TPackage> _package;
-        private readonly List<Type> _stations = new List<Type>();
+        private Type _finalStation { get; set; }
+        private Package<TContent> _package { get; set; }
+        private int _stationRepeatLimit { get; set; } = 100;
+        private List<Type> _stations { get; } = new List<Type>();
+        private bool _withAbortOnError { get; set; } = true;
 
-        public Package<TPackage> Package => _package;
+        public Package<TContent> Package => _package;
 
         private Bus() { }
 
-        public Bus<TPackage> AbortOnError()
-        {
-            _abortOnError = true;
-
-            return this;
-        }
-
-        public Bus<TPackage> NoAbortOnError()
-        {
-            _abortOnError = false;
-
-            return this;
-        }
-
-        public TPackage Go(TPackage content, ILogger<TPackage> logger = null, Func<TPackage, TPackage> callback = null)
+        public TContent Go(TContent content, ILogger<TContent> logger = null, Func<TContent, TContent> callback = null)
         {
             if (content == null) throw new ArgumentException("\"content\" parameter is null");
 
             var currentStationIndex = 0;
-            var packageProperty = typeof(Station<TPackage>).GetProperty("_package", BindingFlags.NonPublic | BindingFlags.Instance);
+            var packageProperty = typeof(Station<TContent>).GetProperty("_package", BindingFlags.NonPublic | BindingFlags.Instance);
             var stationList = _stations.Append(_finalStation).Where(s => s != null).ToList();
+            var iteration = 1;
             
             if (packageProperty == null) throw new Exception("Unable to access package property");
 
-            _package = Cargo.Package.New<TPackage>(content, logger);
+            _package = Cargo.Package.New<TContent>(content, logger);
             callback = callback ?? (arg => arg);
 
             while (currentStationIndex < stationList.Count)
             {
-                // if the package indicates that we're aborted and we don't
-                // have a final station, break out of the loop; setting the 
-                // current station to the final station is handled at the bottom
-                // of the loop.
-
-                //if (_package.IsAborted && stationList.Last() != _finalStation) break;
-
-                var currentStation = (Station<TPackage>) Activator.CreateInstance(stationList[currentStationIndex]);
+                var currentStation = (Station<TContent>) Activator.CreateInstance(stationList[currentStationIndex]);
                 
                 if (currentStation == null) throw new Exception($"Unable to instantiate {stationList[currentStationIndex].FullName}");
 
@@ -70,6 +63,8 @@ namespace Cargo
 
                 try
                 {
+                    if (iteration > _stationRepeatLimit) throw new OverflowException("Station execution iterations exceeded repeat limit");
+                    
                     currentStation.Process();
 
                     var result = Station.Result.New(currentStation, Succeeded);
@@ -91,13 +86,15 @@ namespace Cargo
                     _package.Results.Add(result);
                 }
 
+                iteration = currentStation.IsRepeat ? iteration + 1 : 1;
+
                 // if we are repeating the station then do not change the index and continue.
                 if (currentStation.IsRepeat) continue;
 
                 // if we just aborted and we have a final station, or if the station threw an exception
                 // and the bus is configured to abort on exception then set the next run to the final
                 // station; otherwise set the index outside the loop so no more stations are processed.
-                if (_package.LastStationResult.WasAborted || (_package.LastStationResult.WasFail && _abortOnError))
+                if (_package.LastStationResult.WasAborted || (_package.LastStationResult.WasFail && _withAbortOnError))
                 {
                     currentStationIndex = stationList.Count + (stationList.Last() == _finalStation ? -1 : 1); 
                     continue;
@@ -111,27 +108,23 @@ namespace Cargo
             return callback(content);
         }
 
-        public static Bus<TPackage> New()
+        public static Bus<TContent> New()
         {
-            return new Bus<TPackage>();
+            return new Bus<TContent>();
         }
 
-        public Bus<TPackage> WithFinalStation<TStation>()
+        public Bus<TContent> WithAbortOnError() => this.SetAndReturn(nameof(_withAbortOnError), true);
+        public Bus<TContent> WithNoAbortOnError() => this.SetAndReturn(nameof(_withAbortOnError), false);
+        public Bus<TContent> WithFinalStation<TStation>() => this.SetAndReturn(nameof(_finalStation), typeof(TStation));
+
+        public Bus<TContent> WithStation<TStation>() where TStation : new()
         {
-            if (typeof(TStation)?.BaseType?.FullName != typeof(Station<TPackage>).FullName) throw new ArgumentException("\"station\" parameter is invalid");
-
-            _finalStation = typeof(TStation);
-
-            return this;
-        }
-
-        public Bus<TPackage> WithStation<TStation>()
-        {
-            if (typeof(TStation)?.BaseType?.FullName != typeof(Station<TPackage>).FullName) throw new ArgumentException("\"station\" parameter is invalid");
-
             _stations.Add(typeof(TStation));
 
             return this;
         }
+
+        public Bus<TContent> WithStationRepeatLimit(int limit) => this.SetAndReturn(nameof(_stationRepeatLimit), limit);
+
     }
 }
