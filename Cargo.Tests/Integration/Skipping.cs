@@ -1,6 +1,7 @@
 ﻿using Cargo.Tests.Integration.Common;
 using System.Linq;
 using Xunit;
+using static Cargo.Tests.Integration.Stations.Skipping;
 
 namespace Cargo.Tests.Integration
 {
@@ -11,15 +12,15 @@ namespace Cargo.Tests.Integration
         {
             var content = new ContentModel1();
             var bus = Bus.New<ContentModel1>()
-                .WithStation<Stations.Skipping.Station1>()
-                .WithStation<Stations.Skipping.Station2>()
-                .WithStation<Stations.Skipping.Station3>();
+                .WithStation<Station1>()
+                .WithStation<Station2>()
+                .WithStation<Station3>();
 
             bus.Go(content);
 
             Assert.Equal(4, content.Int1);
             Assert.Equal(1, bus.Package.Results.Count(r => r.WasSkipped));
-            Assert.Equal(typeof(Stations.Skipping.Station2), bus.Package.Results.First(r => r.WasSkipped).Station);
+            Assert.Equal(typeof(Station2), bus.Package.Results.First(r => r.WasSkipped).Station);
         }
 
         [Fact]
@@ -27,13 +28,13 @@ namespace Cargo.Tests.Integration
         {
             var content = new ContentModel1();
             var bus = Bus.New<ContentModel1>()
-                .WithStation<Stations.Skipping.Station1>()
-                .WithStation<Stations.Skipping.Station2>()
-                .WithStation<Stations.Skipping.Station2>()
-                .WithStation<Stations.Skipping.Station3>()
-                .WithStation<Stations.Skipping.Station2>()
-                .WithStation<Stations.Skipping.Station2>()
-                .WithStation<Stations.Skipping.Station4>();
+                .WithStation<Station1>()
+                .WithStation<Station2>()
+                .WithStation<Station2>()
+                .WithStation<Station3>()
+                .WithStation<Station2>()
+                .WithStation<Station2>()
+                .WithStation<Station4>();
 
             bus.Go(content);
 

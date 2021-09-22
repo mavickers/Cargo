@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using static Cargo.Station.Output;
 
 namespace Cargo
@@ -15,7 +14,7 @@ namespace Cargo
             return Bus<TContent>.New();
         }
 
-        public static Bus<TContent> SetAndReturn<TContent>(this Bus<TContent> bus, string propertyName, object value) where TContent : new()
+        internal static Bus<TContent> SetAndReturn<TContent>(this Bus<TContent> bus, string propertyName, object value) where TContent : new()
         {
             var property = typeof(Bus<TContent>).GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -89,20 +88,18 @@ namespace Cargo
                 iteration = currentStation.IsRepeat ? iteration + 1 : 1;
 
                 // if we are repeating the station then do not change the index and continue.
+
                 if (currentStation.IsRepeat) continue;
 
-                // if we just aborted and we have a final station, or if the station threw an exception
-                // and the bus is configured to abort on exception then set the next run to the final
-                // station; otherwise set the index outside the loop so no more stations are processed.
-                if (_package.LastStationResult.WasAborted || (_package.LastStationResult.WasFail && _withAbortOnError))
-                {
-                    currentStationIndex = stationList.Count + (stationList.Last() == _finalStation ? -1 : 1); 
-                    continue;
-                }
-                
-                // just process the next station; if we've arrived at the last or final
-                // station we'll bail out of the loop.
-                currentStationIndex++;
+                // if we just aborted, or if the station threw an exception and the bus is configured to abort
+                // on exception, then set the next run to the final station if it exists; if those conditions 
+                // are not met then just continue on to the next station; if those conditions are met but
+                // there is no final station configured then set the index to exceed the station count so that
+                // no more stations are processed.
+
+                currentStationIndex = _package.LastStationResult.WasAborted || (_package.LastStationResult.WasFail && _withAbortOnError)
+                    ? stationList.Count + (stationList.Last() == _finalStation ? -1 : 1)
+                    : currentStationIndex + 1;
             }
 
             return callback(content);

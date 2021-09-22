@@ -1,6 +1,6 @@
 ﻿using Cargo.Tests.Integration.Common;
-using Cargo.Tests.Integration.Stations;
 using Xunit;
+using static Cargo.Tests.Integration.Stations.Simple;
 
 namespace Cargo.Tests.Integration
 {
@@ -11,9 +11,9 @@ namespace Cargo.Tests.Integration
         {
             var content = new ContentModel1();
             var bus = Bus.New<ContentModel1>()
-                               .WithStation<Simple.Station1>()
-                               .WithStation<Simple.Station2>()
-                               .WithStation<Simple.Station3>();
+                               .WithStation<Station1>()
+                               .WithStation<Station2>()
+                               .WithStation<Station3>();
 
             bus.Go(content);
 
