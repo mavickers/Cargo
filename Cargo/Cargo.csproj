@@ -2,6 +2,25 @@
 
   <PropertyGroup>
     <TargetFrameworks>net48;net5.0</TargetFrameworks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>mavickers</Authors>
+    <Owners>lightpath</Owners>
+    <Company>LightPath Solutions, LLC</Company>
+    <Product>Cargo COR Library</Product>
+    <Copyright>2021 LightPath Solutions, LLC</Copyright>
+    <PackageProjectUrl>https://github.com/mavickers/Cargo</PackageProjectUrl>
+    <PackageId>LightPath.Cargo</PackageId>
+    <Title>Cargo</Title>
+    <AssemblyName>LightPath.Cargo</AssemblyName>
+    <RootNamespace>LightPath.Cargo</RootNamespace>
+    <PackageLicenseFile>license.md</PackageLicenseFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageIconUrl />
+    <RepositoryUrl>https://github.com/mavickers/Cargo</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>COR</PackageTags>
+    <Description>A lightweight chain of responsibility library for .Net.</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +29,17 @@
 
   <ItemGroup>
     <Folder Include="Extensions\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="license.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

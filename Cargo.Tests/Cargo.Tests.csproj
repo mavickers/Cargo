@@ -4,6 +4,10 @@
     <TargetFrameworks>net48;net5.0</TargetFrameworks>
 
     <IsPackable>false</IsPackable>
+
+    <AssemblyName>LightPath.Cargo.Tests</AssemblyName>
+
+    <RootNamespace>LightPath.Cargo.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using static Cargo.Station.Output;
+using static LightPath.Cargo.Station.Output;
 
-namespace Cargo
+namespace LightPath.Cargo
 {
     public static class Bus
     {

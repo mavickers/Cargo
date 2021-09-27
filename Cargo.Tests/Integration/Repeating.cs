@@ -1,8 +1,8 @@
-﻿using Cargo.Tests.Integration.Common;
+﻿using LightPath.Cargo.Tests.Integration.Common;
 using Xunit;
-using static Cargo.Tests.Integration.Stations.Repeating;
+using static LightPath.Cargo.Tests.Integration.Stations.Repeating;
 
-namespace Cargo.Tests.Integration
+namespace LightPath.Cargo.Tests.Integration
 {
     public class Repeating
     {
@@ -14,9 +14,9 @@ namespace Cargo.Tests.Integration
         {
             var content = new ContentModel2();
             var bus = Bus.New<ContentModel2>()
-                         .WithStation<Station1>()
-                         .WithStation<Station2>()
-                         .WithStation<Station3>();
+                         .WithStation<Stations.Repeating.Station1>()
+                         .WithStation<Stations.Repeating.Station2>()
+                         .WithStation<Stations.Repeating.Station3>();
 
             bus.Go(content);
 
@@ -33,9 +33,9 @@ namespace Cargo.Tests.Integration
         {
             var content = new ContentModel2();
             var bus = Bus.New<ContentModel2>()
-                .WithStation<Station1>()
-                .WithStation<Station4>()
-                .WithStation<Station3>();
+                .WithStation<Stations.Repeating.Station1>()
+                .WithStation<Stations.Repeating.Station4>()
+                .WithStation<Stations.Repeating.Station3>();
 
             bus.Go(content);
 
@@ -54,11 +54,11 @@ namespace Cargo.Tests.Integration
         {
             var content = new ContentModel2();
             var bus = Bus.New<ContentModel2>()
-                .WithStation<Station1>()
-                .WithStation<Station2>()
-                .WithStation<Station1>()
-                .WithStation<Station2>()
-                .WithStation<Station3>();
+                .WithStation<Stations.Repeating.Station1>()
+                .WithStation<Stations.Repeating.Station2>()
+                .WithStation<Stations.Repeating.Station1>()
+                .WithStation<Stations.Repeating.Station2>()
+                .WithStation<Stations.Repeating.Station3>();
 
             bus.Go(content);
 

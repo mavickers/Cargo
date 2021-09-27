@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-using Cargo.Tests.Unit.Common;
+using LightPath.Cargo.Tests.Unit.Common;
 using Xunit;
 
-namespace Cargo.Tests.Unit
+namespace LightPath.Cargo.Tests.Unit
 {
     public class Package
     {

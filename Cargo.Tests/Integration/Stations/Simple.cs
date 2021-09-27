@@ -1,6 +1,6 @@
-﻿using Cargo.Tests.Integration.Common;
+﻿using LightPath.Cargo.Tests.Integration.Common;
 
-namespace Cargo.Tests.Integration.Stations
+namespace LightPath.Cargo.Tests.Integration.Stations
 {
     public class Simple
     {

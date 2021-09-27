@@ -1,8 +1,8 @@
-﻿using Cargo.Tests.Unit.Common;
-using System;
+﻿using System;
+using LightPath.Cargo.Tests.Unit.Common;
 using Xunit;
 
-namespace Cargo.Tests.Unit
+namespace LightPath.Cargo.Tests.Unit
 {
     public class Station
     {

@@ -1,9 +1,9 @@
 ﻿using System.Linq;
-using Cargo.Tests.Integration.Common;
+using LightPath.Cargo.Tests.Integration.Common;
 using Xunit;
-using static Cargo.Tests.Integration.Stations.Finalize;
+using static LightPath.Cargo.Tests.Integration.Stations.Finalize;
 
-namespace Cargo.Tests.Integration
+namespace LightPath.Cargo.Tests.Integration
 {
     public class Finalize
     {
@@ -15,13 +15,13 @@ namespace Cargo.Tests.Integration
         {
             var content = new ContentModel2();
             var bus = Bus.New<ContentModel2>()
-                         .WithStation<Station1>()
-                         .WithStation<Station2>()
-                         .WithStation<Station4>()
-                         .WithStation<Station2>()
-                         .WithStation<Station4>()
-                         .WithStation<Station2>()
-                         .WithFinalStation<FinalStation>();
+                         .WithStation<Stations.Finalize.Station1>()
+                         .WithStation<Stations.Finalize.Station2>()
+                         .WithStation<Stations.Finalize.Station4>()
+                         .WithStation<Stations.Finalize.Station2>()
+                         .WithStation<Stations.Finalize.Station4>()
+                         .WithStation<Stations.Finalize.Station2>()
+                         .WithFinalStation<Stations.Finalize.FinalStation>();
 
             bus.Go(content);
 
@@ -39,11 +39,11 @@ namespace Cargo.Tests.Integration
         {
             var content = new ContentModel2();
             var bus = Bus.New<ContentModel2>()
-                         .WithStation<Station1>()
-                         .WithStation<Station3>()
-                         .WithStation<Station2>()
-                         .WithStation<Station4>()
-                         .WithFinalStation<FinalStation>();
+                         .WithStation<Stations.Finalize.Station1>()
+                         .WithStation<Stations.Finalize.Station3>()
+                         .WithStation<Stations.Finalize.Station2>()
+                         .WithStation<Stations.Finalize.Station4>()
+                         .WithFinalStation<Stations.Finalize.FinalStation>();
 
 
 
@@ -64,14 +64,14 @@ namespace Cargo.Tests.Integration
         {
             var content = new ContentModel2();
             var bus = Bus.New<ContentModel2>()
-                         .WithStation<Station1>()
-                         .WithStation<Station2>()
-                         .WithStation<Station4>()
-                         .WithStation<Station4>()
-                         .WithStation<Station5>()
-                         .WithStation<Station4>()
-                         .WithStation<Station1>()
-                         .WithFinalStation<FinalStation>();
+                         .WithStation<Stations.Finalize.Station1>()
+                         .WithStation<Stations.Finalize.Station2>()
+                         .WithStation<Stations.Finalize.Station4>()
+                         .WithStation<Stations.Finalize.Station4>()
+                         .WithStation<Stations.Finalize.Station5>()
+                         .WithStation<Stations.Finalize.Station4>()
+                         .WithStation<Stations.Finalize.Station1>()
+                         .WithFinalStation<Stations.Finalize.FinalStation>();
 
             bus.Go(content);
 

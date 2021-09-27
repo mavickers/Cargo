@@ -1,4 +1,4 @@
-﻿namespace Cargo.Tests.Integration.Common
+﻿namespace LightPath.Cargo.Tests.Integration.Common
 {
     public class ContentModel1
     {
