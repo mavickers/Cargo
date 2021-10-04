@@ -8,9 +8,9 @@ namespace LightPath.Cargo
 {
     public static class Package
     {
-        public static Package<T> New<T>(params object[] parameters) where T : new()
+        public static Package<TContents> New<TContents>(params object[] parameters) where TContents : new()
         {
-            return Package<T>.New(parameters);
+            return Package<TContents>.New(parameters);
         }
     }
 
@@ -22,6 +22,7 @@ namespace LightPath.Cargo
         private Guid _executionId { get; }
         private readonly ILogger<T> _logger;
         private readonly T _contents;
+        private readonly Dictionary<Type, object> _services;
 
         public Exception AbortedWith => _abortedWith;
         public T Contents => _contents;
@@ -43,6 +44,7 @@ namespace LightPath.Cargo
             _exception = null;
             _executionId = Guid.NewGuid();
             _logger = (ILogger<T>) parameters.FirstOrDefault(p => p is ILogger<T>) ?? new Logger<T>(new NullLoggerFactory());
+            _services = new Dictionary<Type, object>();
 
             Results = new List<Station.Result<T>>();
         }
