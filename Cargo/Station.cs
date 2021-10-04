@@ -76,6 +76,13 @@ namespace LightPath.Cargo
         public bool IsRepeat => _repeat;
         public bool NotRepeat => !_repeat;
 
+        public TService GetService<TService>()
+        {
+            if (!_package.Services.ContainsKey(typeof(TService))) return default;
+
+            return (TService)_package.Services[typeof(TService)];
+        }
+
         public static Type Type => MethodBase.GetCurrentMethod().DeclaringType;
 
         public void Abort(string message = "Aborted")

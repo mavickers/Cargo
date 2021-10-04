@@ -32,6 +32,7 @@ namespace LightPath.Cargo
         private Package<TContent> _package { get; set; }
         private int _stationRepeatLimit { get; set; } = 100;
         private List<Type> _stations { get; } = new List<Type>();
+        private Dictionary<Type, object> _services { get; } = new Dictionary<Type, object>();
         private bool _withAbortOnError { get; set; } = true;
 
         public Package<TContent> Package => _package;
@@ -49,7 +50,7 @@ namespace LightPath.Cargo
             
             if (packageProperty == null) throw new Exception("Unable to access package property");
 
-            _package = Cargo.Package.New<TContent>(content, logger);
+            _package = Cargo.Package.New<TContent>(content, logger, _services);
             callback = callback ?? (arg => arg);
 
             while (currentStationIndex < stationList.Count)
@@ -113,6 +114,13 @@ namespace LightPath.Cargo
         public Bus<TContent> WithAbortOnError() => this.SetAndReturn(nameof(_withAbortOnError), true);
         public Bus<TContent> WithNoAbortOnError() => this.SetAndReturn(nameof(_withAbortOnError), false);
         public Bus<TContent> WithFinalStation<TStation>() => this.SetAndReturn(nameof(_finalStation), typeof(TStation));
+
+        public Bus<TContent> WithService<TService>(TService service)
+        {
+            if (service != null) _services.Add(typeof(TService), service);
+
+            return this;
+        }
 
         public Bus<TContent> WithStation<TStation>() where TStation : new()
         {

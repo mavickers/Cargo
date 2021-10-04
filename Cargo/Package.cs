@@ -22,7 +22,6 @@ namespace LightPath.Cargo
         private Guid _executionId { get; }
         private readonly ILogger<TContents> _logger;
         private readonly TContents _contents;
-        private readonly Dictionary<Type, object> _services;
 
         public Exception AbortedWith => _abortedWith;
         public TContents Contents => _contents;
@@ -33,7 +32,7 @@ namespace LightPath.Cargo
         public Station.Result<TContents> LastStationResult => Results?.LastOrDefault();
         public ILogger Logger => _logger;
         public List<Station.Result<TContents>> Results { get; }
-
+        internal readonly Dictionary<Type, object> Services;
 
         private Package(params object[] parameters)
         {
@@ -44,9 +43,9 @@ namespace LightPath.Cargo
             _exception = null;
             _executionId = Guid.NewGuid();
             _logger = (ILogger<TContents>) parameters.FirstOrDefault(p => p is ILogger<TContents>) ?? new Logger<TContents>(new NullLoggerFactory());
-            _services = new Dictionary<Type, object>();
 
             Results = new List<Station.Result<TContents>>();
+            Services = (Dictionary<Type, object>) parameters.FirstOrDefault(p => p is Dictionary<Type, object>) ?? new Dictionary<Type, object>();
         }
 
         internal void Abort(Exception exception = null)
@@ -78,20 +77,6 @@ namespace LightPath.Cargo
             if (result == null) throw new ArgumentException("AddResult \"result\" parameter is null");
 
             Results.Add(result);
-        }
-
-        public Package<TContents> AddService<TService>(TService service)
-        {
-            if (service != null) _services.Add(typeof(TService), service);
-
-            return this;
-        }
-
-        public TService GetService<TService>()
-        {
-            if (!_services.ContainsKey(typeof(TService))) return default;
-
-            return (TService) _services[typeof(TService)];
         }
 
         public static Package<TContents> New(params object[] parameters)
