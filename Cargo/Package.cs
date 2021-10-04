@@ -87,7 +87,7 @@ namespace LightPath.Cargo
             return this;
         }
 
-        public TService GetService<TService>() where TService : new()
+        public TService GetService<TService>()
         {
             if (!_services.ContainsKey(typeof(TService))) return default;
 

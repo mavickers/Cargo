@@ -1,5 +1,18 @@
 ﻿namespace LightPath.Cargo.Tests.Unit.Common
 {
+    public interface Interface1
+    {
+        int TestValue();
+    }
+
+    public class Implementation1 : Interface1
+    {
+        public int TestValue()
+        {
+            return 5;
+        }
+    }
+
     public class ContentModel1
     {
         public string String1 { get; set; }

@@ -28,5 +28,18 @@ namespace LightPath.Cargo.Tests.Unit
             Assert.Equal(package.Contents, contents);
             Assert.Null(package.AbortedWith);
         }
+
+        [Fact]
+        public void Services()
+        {
+            var package = Cargo.Package.New<ContentModel1>(new ContentModel1());
+
+            package.AddService<Interface1>(new Implementation1());
+
+            var service = package.GetService<Interface1>();
+
+            Assert.NotNull(service);
+            Assert.Equal(5, service.TestValue());
+        }
     }
 }
