@@ -80,6 +80,20 @@ namespace LightPath.Cargo
             Results.Add(result);
         }
 
+        public Package<TContents> AddService<TService>(TService service)
+        {
+            if (service != null) _services.Add(typeof(TService), service);
+
+            return this;
+        }
+
+        public TService GetService<TService>() where TService : new()
+        {
+            if (!_services.ContainsKey(typeof(TService))) return default;
+
+            return (TService) _services[typeof(TService)];
+        }
+
         public static Package<TContents> New(params object[] parameters)
         {
             return new Package<TContents>(parameters);
