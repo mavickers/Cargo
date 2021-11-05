@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using LightPath.Cargo.Tests.Integration.Common;
+using LightPath.Cargo.Tests.Unit;
 using Xunit;
 using static LightPath.Cargo.Tests.Integration.Stations.Finalize;
 

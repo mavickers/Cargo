@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using LightPath.Cargo.Tests.Unit.Common;
 using Xunit;
 
@@ -21,8 +20,6 @@ namespace LightPath.Cargo.Tests.Unit
             Assert.False(package.IsAborted);
             Assert.False(package.IsErrored);
             Assert.Null(package.LastStationResult);
-            Assert.NotNull(package.Logger);
-            Assert.IsAssignableFrom<ILogger>(package.Logger);
             Assert.NotNull(package.Results);
             Assert.Empty(package.Results);
             Assert.Equal(package.Contents, contents);

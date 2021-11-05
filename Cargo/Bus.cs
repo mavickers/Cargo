@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -39,7 +38,7 @@ namespace LightPath.Cargo
 
         private Bus() { }
 
-        public TContent Go(TContent content, ILogger<TContent> logger = null, Func<TContent, TContent> callback = null)
+        public TContent Go(TContent content, Func<TContent, TContent> callback = null)
         {
             if (content == null) throw new ArgumentException("\"content\" parameter is null");
 
@@ -50,7 +49,7 @@ namespace LightPath.Cargo
             
             if (packageProperty == null) throw new Exception("Unable to access package property");
 
-            _package = Cargo.Package.New<TContent>(content, logger, _services);
+            _package = Cargo.Package.New<TContent>(content, _services);
             callback = callback ?? (arg => arg);
 
             while (currentStationIndex < stationList.Count)

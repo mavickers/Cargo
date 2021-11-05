@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -20,7 +18,6 @@ namespace LightPath.Cargo
         private Exception _abortedWith { get; set; }
         private Exception _exception { get; }
         private Guid _executionId { get; }
-        private readonly ILogger<TContents> _logger;
         private readonly TContents _contents;
 
         public Exception AbortedWith => _abortedWith;
@@ -30,7 +27,6 @@ namespace LightPath.Cargo
         public bool IsAborted => _abort;
         public bool IsErrored => Results?.Any(r => r.WasFail) ?? false;
         public Station.Result<TContents> LastStationResult => Results?.LastOrDefault();
-        public ILogger Logger => _logger;
         public List<Station.Result<TContents>> Results { get; }
         internal readonly Dictionary<Type, object> Services;
 
@@ -42,7 +38,6 @@ namespace LightPath.Cargo
             _contents = (TContents)parameters.First(p => p.GetType() == typeof(TContents));
             _exception = null;
             _executionId = Guid.NewGuid();
-            _logger = (ILogger<TContents>) parameters.FirstOrDefault(p => p is ILogger<TContents>) ?? new Logger<TContents>(new NullLoggerFactory());
 
             Results = new List<Station.Result<TContents>>();
             Services = (Dictionary<Type, object>) parameters.FirstOrDefault(p => p is Dictionary<Type, object>) ?? new Dictionary<Type, object>();
