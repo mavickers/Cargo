@@ -73,8 +73,10 @@ namespace LightPath.Cargo
         protected T Contents => _package.Contents;
         protected Station.Result<T> LastResult => _package.Results.Last();
 
+        public bool IsErrored => _package.IsErrored;
         public bool IsRepeat => _repeat;
         public bool NotRepeat => !_repeat;
+        public Exception PackageException => _package.Exception;
 
         public TService GetService<TService>()
         {
