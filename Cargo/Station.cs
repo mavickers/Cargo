@@ -76,7 +76,7 @@ namespace LightPath.Cargo
         public bool IsErrored => _package.IsErrored;
         public bool IsRepeat => _repeat;
         public bool NotRepeat => !_repeat;
-        public Exception PackageException => _package.Exception;
+        public List<Station.Result<T>> PackageResults => _package.Results;
 
         public TService GetService<TService>()
         {
