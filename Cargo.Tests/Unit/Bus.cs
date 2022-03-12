@@ -8,10 +8,15 @@ namespace LightPath.Cargo.Tests.Unit
         [Fact]
         public void Instantiation()
         {
-            var bus = Cargo.Bus.New<ContentModel1>();
+            var bus1 = Cargo.Bus.New<ContentModel1>();
 
-            Assert.NotNull(bus);
-            Assert.Null(bus.Package);
+            Assert.NotNull(bus1);
+            Assert.Null(bus1.Package);
+
+            var bus2 = Cargo.Bus.New<Interface1>();
+
+            Assert.NotNull(bus2);
+            Assert.Null(bus2.Package);
         }
     }
 }

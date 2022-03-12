@@ -35,5 +35,41 @@ namespace LightPath.Cargo.Tests.Integration
             Assert.False(bus.Package.IsAborted);
             Assert.False(bus.Package.IsErrored);
         }
+
+        /// <summary>
+        /// Scenario2 repeats Scenario1 but uses an interface for the bus
+        /// package type and implementations of the interface as station
+        /// package types.
+        /// </summary>
+        [Fact]
+        public void Scenario2()
+        {
+            var content = new ContentModel3();
+            var bus = Bus.New<IContentModel3>()
+                .WithStation<Simple.Station4>()
+                .WithStation<Simple.Station5>()
+                .WithStation<Simple.Station6>()
+                .WithStation<Simple.Station7>();
+
+            bus.Go(content);
+        }
+
+        /// <summary>
+        /// Scenario2 repeats Scenario1 but uses an interface for the bus
+        /// package type and implementations of the interface as station
+        /// package types.
+        /// </summary>
+        [Fact]
+        public void Scenario3()
+        {
+            var content = new ContentModel3();
+            var bus = Bus.New<ContentModel3>()
+                .WithStation<Simple.Station4>()
+                .WithStation<Simple.Station5>()
+                .WithStation<Simple.Station6>()
+                .WithStation<Simple.Station7>();
+
+            bus.Go(content);
+        }
     }
 }

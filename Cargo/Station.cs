@@ -22,17 +22,17 @@ namespace LightPath.Cargo
             { typeof(SkipException), Output.Skipped }
         };
 
-        public static class Result
-        {
-            public static Result<T> New<T>(Station<T> station, Output output, Exception exception = null) where T : new()
-            {
-                return new Result<T>(station, output, exception);
-            }
-        }
+        //public static class Result
+        //{
+            //public static Result<T> New<T>(Station<T> station, Output output, Exception exception = null)
+            //{
+            //    return new Result<T>(station, output, exception);
+            //}
+        //}
 
-        public class Result<T>
+        public class Result
         {
-            internal Station<T> _station { get; }
+            internal Type _station { get; }
             internal Output _output { get; }
             internal Exception _exception { get; }
 
@@ -44,11 +44,16 @@ namespace LightPath.Cargo
             public bool WasSuccess => _output == Output.Succeeded;
             public bool WasUnknown => _output == Output.Unknown;
 
-            internal Result(Station<T> station, Output output, Exception exception = null)
+            internal Result(Type stationType, Output output, Exception exception = null)
             {
-                _station = station ?? throw new ArgumentException(nameof(station));
+                _station = stationType ?? throw new ArgumentException(nameof(stationType));
                 _output = output;
                 _exception = exception;
+            }
+
+            public static Result New(Type stationType, Output output, Exception exception = null)
+            {
+                return new Result(stationType, output, exception);
             }
         }
 
@@ -71,12 +76,12 @@ namespace LightPath.Cargo
         private bool _repeat { get; set; }
 
         protected T Contents => _package.Contents;
-        protected Station.Result<T> LastResult => _package.Results.Last();
+        protected Station.Result LastResult => _package.Results.Last();
 
         public bool IsErrored => _package.IsErrored;
         public bool IsRepeat => _repeat;
         public bool NotRepeat => !_repeat;
-        public List<Station.Result<T>> PackageResults => _package.Results;
+        public List<Station.Result> PackageResults => _package.Results;
 
         public TService GetService<TService>()
         {

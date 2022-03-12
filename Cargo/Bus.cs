@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using static LightPath.Cargo.Station.Output;
@@ -8,12 +9,12 @@ namespace LightPath.Cargo
 {
     public static class Bus
     {
-        public static Bus<TContent> New<TContent>() where TContent : new()
+        public static Bus<TContent> New<TContent>()
         {
             return Bus<TContent>.New();
         }
 
-        internal static Bus<TContent> SetAndReturn<TContent>(this Bus<TContent> bus, string propertyName, object value) where TContent : new()
+        internal static Bus<TContent> SetAndReturn<TContent>(this Bus<TContent> bus, string propertyName, object value)
         {
             var property = typeof(Bus<TContent>).GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -25,7 +26,7 @@ namespace LightPath.Cargo
         }
     }
 
-    public class Bus<TContent> where TContent : new()
+    public class Bus<TContent>
     {
         private Type _finalStation { get; set; }
         private Package<TContent> _package { get; set; }
@@ -42,8 +43,11 @@ namespace LightPath.Cargo
         {
             if (content == null) throw new ArgumentException("\"content\" parameter is null");
 
+            var busPackageType = typeof(TContent);
             var currentStationIndex = 0;
             var packageProperty = typeof(Station<TContent>).GetProperty("_package", BindingFlags.NonPublic | BindingFlags.Instance);
+            var isRepeatProperty = typeof(Station<TContent>).GetProperty("_repeat", BindingFlags.NonPublic | BindingFlags.Instance);
+            var processMethod = typeof(Station<TContent>).GetMethod("Process", BindingFlags.Public | BindingFlags.Instance);
             var stationList = _stations.Append(_finalStation).Where(s => s != null).ToList();
             var iteration = 1;
             
@@ -54,19 +58,47 @@ namespace LightPath.Cargo
 
             while (currentStationIndex < stationList.Count)
             {
-                var currentStation = (Station<TContent>) Activator.CreateInstance(stationList[currentStationIndex]);
-                
+                var stationType = stationList[currentStationIndex];
+                var stationPackageType = stationType.BaseType.GenericTypeArguments[0];
+                var isRepeat = false;
+                var converter = TypeDescriptor.GetConverter(stationPackageType);
+
+                //if (busPackageType != stationPackageType)
+                //{
+                //    if (busPackageType.IsInterface)
+                //    {
+                //        if (busPackageType.IsAssignableFrom(stationPackageType))
+                //        {
+                //        }
+                //        else
+                //        {
+                //            throw new NotImplementedException();
+                //        }
+                //    }
+                //    else
+                //    {
+                //        throw new NotImplementedException();
+                //    }
+                //}
+
+                var currentStation = Activator.CreateInstance(stationList[currentStationIndex]);
+
                 if (currentStation == null) throw new Exception($"Unable to instantiate {stationList[currentStationIndex].FullName}");
+
+                var convertedPackage = converter.ConvertFrom(_package);
 
                 packageProperty.SetValue(currentStation, _package);
 
                 try
                 {
                     if (iteration > _stationRepeatLimit) throw new OverflowException("Station execution iterations exceeded repeat limit");
-                    
-                    currentStation.Process();
 
-                    var result = Station.Result.New(currentStation, Succeeded);
+                    processMethod.Invoke(currentStation, null);
+                    isRepeat = (bool) isRepeatProperty.GetValue(currentStation);
+                    
+                    //currentStation.Process();
+
+                    var result = Station.Result.New(stationType, Succeeded);
 
                     _package.Results.Add(result);
                 }
@@ -80,16 +112,17 @@ namespace LightPath.Cargo
                     if (exception is Station.AbortException) output = Aborted;
                     if (exception is Station.SkipException) output = Skipped;
 
-                    var result = Station.Result.New(currentStation, output, exception);
+                    var result = Station.Result.New(stationType, output, exception);
 
                     _package.Results.Add(result);
                 }
 
-                iteration = currentStation.IsRepeat ? iteration + 1 : 1;
+                //iteration = currentStation.IsRepeat ? iteration + 1 : 1;
+                iteration = isRepeat ? iteration + 1 : 1;
 
                 // if we are repeating the station then do not change the index and continue.
 
-                if (currentStation.IsRepeat) continue;
+                if (isRepeat) continue;
 
                 // if we just aborted, or if the station threw an exception and the bus is configured to abort
                 // on exception, then set the next run to the final station if it exists; if those conditions 
@@ -121,7 +154,7 @@ namespace LightPath.Cargo
             return this;
         }
 
-        public Bus<TContent> WithStation<TStation>() where TStation : new()
+        public Bus<TContent> WithStation<TStation>()
         {
             _stations.Add(typeof(TStation));
 

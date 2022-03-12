@@ -18,14 +18,14 @@ namespace LightPath.Cargo.Tests.Unit
         public void Instantiation()
         {
             var station = new TestStation1();
-            var result = Cargo.Station.Result.New(station, Cargo.Station.Output.Skipped);
+            var result = Cargo.Station.Result.New(station.GetType(), Cargo.Station.Output.Skipped);
 
             Assert.False(station.IsRepeat);
             Assert.True(station.NotRepeat);
             Assert.Null(result.Exception);
             Assert.True(result.WasSkipped);
 
-            result = Cargo.Station.Result.New(station, Cargo.Station.Output.Aborted, new Exception("testing"));
+            result = Cargo.Station.Result.New(station.GetType(), Cargo.Station.Output.Aborted, new Exception("testing"));
 
             Assert.NotNull(result.Exception);
             Assert.True(result.WasAborted);

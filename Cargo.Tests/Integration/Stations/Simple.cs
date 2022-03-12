@@ -30,5 +30,41 @@ namespace LightPath.Cargo.Tests.Integration.Stations
                 Contents.String3 = Contents.Int1.ToString();
             }
         }
+
+        public class Station4 : Station<IContentModel3>
+        {
+            public override void Process()
+            {
+                Contents.Int1 += 2;
+                Contents.String3 = Contents.Int1.ToString();
+            }
+        }
+
+        public class Station5 : Station<IContentModel3>
+        {
+            public override void Process()
+            {
+                Contents.Int1 += 4;
+                Contents.String2 = Contents.Int1.ToString();
+            }
+        }
+
+        public class Station6 : Station<IContentModel3>
+        {
+            public override void Process()
+            {
+                Contents.Int1 += 6;
+                Contents.String3 = Contents.Int1.ToString();
+            }
+        }
+
+        public class Station7 : Station<ContentModel3>
+        {
+            public override void Process()
+            {
+                Contents.Int1 += 8;
+                Contents.String4 = Contents.Int1.ToString();
+            }
+        }
     }
 }

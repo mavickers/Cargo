@@ -6,7 +6,7 @@ namespace LightPath.Cargo
 {
     public static class Package
     {
-        public static Package<TContents> New<TContents>(params object[] parameters) where TContents : new()
+        public static Package<TContents> New<TContents>(params object[] parameters)
         {
             return Package<TContents>.New(parameters);
         }
@@ -26,20 +26,26 @@ namespace LightPath.Cargo
         internal Guid ExecutionId => _executionId;
         public bool IsAborted => _abort;
         public bool IsErrored => Results?.Any(r => r.WasFail) ?? false;
-        public Station.Result<TContents> LastStationResult => Results?.LastOrDefault();
-        public List<Station.Result<TContents>> Results { get; }
+        public Station.Result LastStationResult => Results?.LastOrDefault();
+        public List<Station.Result> Results { get; }
         internal readonly Dictionary<Type, object> Services;
 
         private Package(params object[] parameters)
         {
-            if (parameters.Count(p => p?.GetType() == typeof(TContents)) != 1) throw new ArgumentException($"Package parameters must contain a single instance of {typeof(TContents).FullName}");
+            var isInstanceOf = parameters.Count(p => p?.GetType() == typeof(TContents)) == 1;
+            var isInheriting = parameters.Count(p => p?.GetType().GetInterfaces().Any(i => i == typeof(TContents)) ?? false) == 1;
+            //if (parameters.Count(p => p?.GetType() == typeof(TContents)) != 1) throw new ArgumentException($"Package parameters must contain a single instance of {typeof(TContents).FullName}");
+
+            if (!isInheriting && !isInstanceOf) throw new ArgumentException($"Package parameters must inherit or be an instance of {typeof(TContents).FullName}");
 
             _abort = false;
-            _contents = (TContents)parameters.First(p => p.GetType() == typeof(TContents));
             _exception = null;
             _executionId = Guid.NewGuid();
+            _contents = isInstanceOf 
+                ? (TContents)parameters.First(p => p.GetType() == typeof(TContents)) 
+                : (TContents)parameters.First(p => p.GetType().GetInterfaces().Any(i => i == typeof(TContents))); 
 
-            Results = new List<Station.Result<TContents>>();
+            Results = new List<Station.Result>();
             Services = (Dictionary<Type, object>) parameters.FirstOrDefault(p => p is Dictionary<Type, object>) ?? new Dictionary<Type, object>();
         }
 
@@ -67,7 +73,7 @@ namespace LightPath.Cargo
             if (condition) Abort(exceptionMessage);
         }
 
-        internal void AddResult(Station.Result<TContents> result)
+        internal void AddResult(Station.Result result)
         {
             if (result == null) throw new ArgumentException("AddResult \"result\" parameter is null");
 
