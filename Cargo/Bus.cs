@@ -55,6 +55,7 @@ namespace LightPath.Cargo
             while (currentStationIndex < stationList.Count)
             {
                 var currentStation = (Station<TContent>) Activator.CreateInstance(stationList[currentStationIndex]);
+                var isFinalStation = _finalStation != null && stationList[currentStationIndex] == stationList.Last();
                 
                 if (currentStation == null) throw new Exception($"Unable to instantiate {stationList[currentStationIndex].FullName}");
 
@@ -97,7 +98,7 @@ namespace LightPath.Cargo
                 // there is no final station configured then set the index to exceed the station count so that
                 // no more stations are processed.
 
-                currentStationIndex = _package.LastStationResult.WasAborted || (_package.LastStationResult.WasFail && _withAbortOnError)
+                currentStationIndex = _package.LastStationResult.WasAborted || (_package.LastStationResult.WasFail && _withAbortOnError && !isFinalStation)
                     ? stationList.Count + (stationList.Last() == _finalStation ? -1 : 1)
                     : currentStationIndex + 1;
             }
