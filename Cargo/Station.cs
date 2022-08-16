@@ -24,7 +24,7 @@ namespace LightPath.Cargo
 
         public static class Result
         {
-            public static Result<T> New<T>(Station<T> station, Output output, Exception exception = null) where T : new()
+            public static Result<T> New<T>(Station<T> station, Output output, Exception exception = null) where T : class
             {
                 return new Result<T>(station, output, exception);
             }

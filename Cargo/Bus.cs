@@ -8,12 +8,12 @@ namespace LightPath.Cargo
 {
     public static class Bus
     {
-        public static Bus<TContent> New<TContent>() where TContent : new()
+        public static Bus<TContent> New<TContent>() where TContent : class
         {
             return Bus<TContent>.New();
         }
 
-        internal static Bus<TContent> SetAndReturn<TContent>(this Bus<TContent> bus, string propertyName, object value) where TContent : new()
+        internal static Bus<TContent> SetAndReturn<TContent>(this Bus<TContent> bus, string propertyName, object value) where TContent : class
         {
             var property = typeof(Bus<TContent>).GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -25,7 +25,7 @@ namespace LightPath.Cargo
         }
     }
 
-    public class Bus<TContent> where TContent : new()
+    public class Bus<TContent> where TContent : class
     {
         private Type _finalStation { get; set; }
         private Package<TContent> _package { get; set; }
@@ -122,7 +122,7 @@ namespace LightPath.Cargo
             return this;
         }
 
-        public Bus<TContent> WithStation<TStation>() where TStation : new()
+        public Bus<TContent> WithStation<TStation>() where TStation : class
         {
             _stations.Add(typeof(TStation));
 
