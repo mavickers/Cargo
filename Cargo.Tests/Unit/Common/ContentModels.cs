@@ -27,4 +27,14 @@
             Int1 = 0;
         }
     }
+
+    public class ContentModel2
+    {
+        public string String1 { get; set; }
+
+        public ContentModel2(string string1)
+        {
+            String1 = string1;
+        }
+    }
 }
