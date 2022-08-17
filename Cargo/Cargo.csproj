@@ -7,7 +7,7 @@
     <Owners>lightpath</Owners>
     <Company>LightPath Solutions, LLC</Company>
     <Product>Cargo COR Library</Product>
-    <Copyright>2021 LightPath Solutions, LLC</Copyright>
+    <Copyright>2022 LightPath Solutions, LLC</Copyright>
     <PackageProjectUrl>https://github.com/mavickers/Cargo</PackageProjectUrl>
     <PackageId>LightPath.Cargo</PackageId>
     <Title>Cargo</Title>
@@ -21,9 +21,9 @@
     <PackageTags>COR</PackageTags>
     <Description>A lightweight chain of responsibility library for .Net.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Version>1.2.5</Version>
-    <AssemblyVersion>1.2.5.0</AssemblyVersion>
-    <FileVersion>1.2.5.0</FileVersion>
+    <Version>1.2.6</Version>
+    <AssemblyVersion>1.2.6.0</AssemblyVersion>
+    <FileVersion>1.2.6.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
