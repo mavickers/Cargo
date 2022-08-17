@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Runtime.Remoting;
 using LightPath.Cargo.Tests.Integration.Common;
 using LightPath.Cargo.Tests.Unit;
 using Xunit;
@@ -85,6 +87,26 @@ namespace LightPath.Cargo.Tests.Integration
             Assert.True(bus.Package.IsErrored);
             Assert.False(bus.Package.IsAborted);
             Assert.Equal(21, content.IntVal);
+        }
+
+        /// <summary>
+        /// Bug test case
+        /// https://github.com/mavickers/Cargo/issues/5
+        /// </summary>
+        [Fact]
+        public void Scenario4()
+        {
+            var content = new ContentModel2();
+            var bus = Bus.New<ContentModel2>()
+                         .WithStationRepeatLimit(1)
+                         .WithStation<Stations.Finalize.Station2>()
+                         .WithFinalStation<Stations.Finalize.FinalStationCrasher>();
+
+            bus.Go(content);
+
+            Assert.True(bus.Package.IsErrored);
+            Assert.False(bus.Package.IsAborted);
+            Assert.True(bus.Package.Results.Last().Exception is System.NotImplementedException);
         }
     }
 }

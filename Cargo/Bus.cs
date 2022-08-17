@@ -9,12 +9,12 @@ namespace LightPath.Cargo
 {
     public static class Bus
     {
-        public static Bus<TContent> New<TContent>()
+        public static Bus<TContent> New<TContent>() where TContent : class
         {
             return Bus<TContent>.New();
         }
 
-        internal static Bus<TContent> SetAndReturn<TContent>(this Bus<TContent> bus, string propertyName, object value)
+        internal static Bus<TContent> SetAndReturn<TContent>(this Bus<TContent> bus, string propertyName, object value) where TContent : class
         {
             var property = typeof(Bus<TContent>).GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -26,7 +26,7 @@ namespace LightPath.Cargo
         }
     }
 
-    public class Bus<TContent>
+    public class Bus<TContent> where TContent : class
     {
         private Type _finalStation { get; set; }
         private Package<TContent> _package { get; set; }
@@ -130,7 +130,7 @@ namespace LightPath.Cargo
                 // there is no final station configured then set the index to exceed the station count so that
                 // no more stations are processed.
 
-                currentStationIndex = _package.LastStationResult.WasAborted || (_package.LastStationResult.WasFail && _withAbortOnError)
+                currentStationIndex = _package.LastStationResult.WasAborted || (_package.LastStationResult.WasFail && _withAbortOnError && !isFinalStation)
                     ? stationList.Count + (stationList.Last() == _finalStation ? -1 : 1)
                     : currentStationIndex + 1;
             }

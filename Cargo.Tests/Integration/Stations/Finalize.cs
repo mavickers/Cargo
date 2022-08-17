@@ -52,5 +52,17 @@ namespace LightPath.Cargo.Tests.Integration.Stations
                 Contents.IntVal += 20;
             }
         }
+
+        /// <summary>
+        /// Purposefully throw an exception in the final station
+        /// https://github.com/mavickers/Cargo/issues/5
+        /// </summary>
+        public class FinalStationCrasher : Station<ContentModel2>
+        {
+            public override void Process()
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 }

@@ -6,7 +6,7 @@ namespace LightPath.Cargo
 {
     public static class Package
     {
-        public static Package<TContents> New<TContents>(params object[] parameters)
+        public static Package<TContents> New<TContents>(params object[] parameters) where TContents : class
         {
             return Package<TContents>.New(parameters);
         }
