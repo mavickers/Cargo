@@ -7,39 +7,43 @@ namespace LightPath.Cargo.Tests.Integration.Stations
     {
         public class Station1 : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
                 Contents.IntVal = 1;
+
+                return Station.Action.Next();
             }
         }
 
         public class Station2 : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
-                Skip();
+                return Station.Action.Next();
             }
         }
 
         public class Station3 : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
-                Abort();
+                return Station.Action.Abort();
             }
         }
 
         public class Station4 : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
                 Contents.IntVal += 4;
+
+                return Station.Action.Next();
             }
         }
 
         public class Station5 : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
                 throw new Exception("Testing");
             }
@@ -47,9 +51,11 @@ namespace LightPath.Cargo.Tests.Integration.Stations
 
         public class FinalStation : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
                 Contents.IntVal += 20;
+
+                return Station.Action.Next();
             }
         }
 
@@ -59,7 +65,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         /// </summary>
         public class FinalStationCrasher : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
                 throw new NotImplementedException();
             }

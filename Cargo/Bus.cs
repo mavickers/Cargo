@@ -43,15 +43,13 @@ namespace LightPath.Cargo
         {
             if (content == null) throw new ArgumentException("\"content\" parameter is null");
 
-            var busPackageType = typeof(TContent);
             var currentStationIndex = 0;
-            var packageProperty = typeof(Station<TContent>).GetProperty("_package", BindingFlags.NonPublic | BindingFlags.Instance);
-            var isRepeatProperty = typeof(Station<TContent>).GetProperty("_repeat", BindingFlags.NonPublic | BindingFlags.Instance);
             var processMethod = typeof(Station<TContent>).GetMethod("Process", BindingFlags.Public | BindingFlags.Instance);
             var stationList = _stations.Append(_finalStation).Where(s => s != null).ToList();
+            var hasFinalStation = _finalStation != null;
             var iteration = 1;
             
-            if (packageProperty == null) throw new Exception("Unable to access package property");
+            if (processMethod == null) throw new Exception("Bus.Go failed - unable to access processmethod");
 
             _package = Cargo.Package.New<TContent>(content, _services);
             callback = callback ?? (arg => arg);
@@ -59,80 +57,45 @@ namespace LightPath.Cargo
             while (currentStationIndex < stationList.Count)
             {
                 var stationType = stationList[currentStationIndex];
-                var stationPackageType = stationType.BaseType.GenericTypeArguments[0];
-                var isRepeat = false;
-                var converter = TypeDescriptor.GetConverter(stationPackageType);
-
-                //if (busPackageType != stationPackageType)
-                //{
-                //    if (busPackageType.IsInterface)
-                //    {
-                //        if (busPackageType.IsAssignableFrom(stationPackageType))
-                //        {
-                //        }
-                //        else
-                //        {
-                //            throw new NotImplementedException();
-                //        }
-                //    }
-                //    else
-                //    {
-                //        throw new NotImplementedException();
-                //    }
-                //}
-
+                var isLastStation = stationList[currentStationIndex] == stationList.Last();
                 var currentStation = Activator.CreateInstance(stationList[currentStationIndex]);
+                var packageProperty = typeof(Station<TContent>).GetProperty("_package", BindingFlags.NonPublic | BindingFlags.Instance);
 
                 if (currentStation == null) throw new Exception($"Unable to instantiate {stationList[currentStationIndex].FullName}");
-
-                var convertedPackage = converter.ConvertFrom(_package);
+                if (packageProperty == null) throw new Exception("Unable to access package property");
 
                 packageProperty.SetValue(currentStation, _package);
 
                 try
                 {
-                    if (iteration > _stationRepeatLimit) throw new OverflowException("Station execution iterations exceeded repeat limit");
+                    if (iteration > _stationRepeatLimit) throw new OverflowException("Bug.Go failed - station execution iterations exceeded repeat limit");
 
-                    processMethod.Invoke(currentStation, null);
-                    isRepeat = (bool) isRepeatProperty.GetValue(currentStation);
-                    
-                    //currentStation.Process();
-
-                    var result = Station.Result.New(stationType, Succeeded);
+                    var action = (Station.Action)processMethod.Invoke(currentStation, null);
+                    var result = Station.Result.New(stationType, action, Succeeded);
 
                     _package.Results.Add(result);
                 }
                 catch (Exception exception)
                 {
-                    // if we have an abort or skip exception we do not want to 
-                    // pass the exception value to the results.
-
-                    var output = Failed;
-
-                    if (exception is Station.AbortException) output = Aborted;
-                    if (exception is Station.SkipException) output = Skipped;
-
-                    var result = Station.Result.New(stationType, output, exception);
+                    var action = _withAbortOnError ? Station.Action.Abort(exception) : Station.Action.Next(exception);
+                    var result = Station.Result.New(stationType, action, Failed, exception);
 
                     _package.Results.Add(result);
                 }
 
-                //iteration = currentStation.IsRepeat ? iteration + 1 : 1;
-                iteration = isRepeat ? iteration + 1 : 1;
+                var isRepeating = _package.LastStationResult?.IsRepeating ?? false;
+                var isAborting = _package.LastStationResult?.IsAborting ?? false;
+                var wasFailure = _package.LastStationResult?.WasFailure ?? false;
+                var gotoFinalStation = !isLastStation && (isAborting || (wasFailure && _withAbortOnError && hasFinalStation));
 
-                // if we are repeating the station then do not change the index and continue.
+                iteration = isRepeating ? iteration + 1 : 1;
 
-                if (isRepeat) continue;
+                // if we are repeating the station then do not change the index and continue
+                // if we are going to the final station then change the index to the total count - 1
+                // if we aborted then go past the total count (this will end the loop)
+                // otherwise increment the index
 
-                // if we just aborted, or if the station threw an exception and the bus is configured to abort
-                // on exception, then set the next run to the final station if it exists; if those conditions 
-                // are not met then just continue on to the next station; if those conditions are met but
-                // there is no final station configured then set the index to exceed the station count so that
-                // no more stations are processed.
-
-                currentStationIndex = _package.LastStationResult.WasAborted || (_package.LastStationResult.WasFail && _withAbortOnError && !isFinalStation)
-                    ? stationList.Count + (stationList.Last() == _finalStation ? -1 : 1)
-                    : currentStationIndex + 1;
+                currentStationIndex += isRepeating ? 0 : gotoFinalStation ? stationList.Count - 1 : isAborting ? stationList.Count + 1 : 1;
             }
 
             return callback(content);

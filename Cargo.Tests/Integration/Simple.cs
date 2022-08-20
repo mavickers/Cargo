@@ -12,9 +12,9 @@ namespace LightPath.Cargo.Tests.Integration
         {
             var content = new ContentModel1();
             var bus = Bus.New<ContentModel1>()
-                               .WithStation<Simple.Station1>()
-                               .WithStation<Simple.Station2>()
-                               .WithStation<Simple.Station3>();
+                               .WithStation<Station1>()
+                               .WithStation<Station2>()
+                               .WithStation<Station3>();
 
             bus.Go(content);
 
@@ -46,12 +46,12 @@ namespace LightPath.Cargo.Tests.Integration
         {
             var content = new ContentModel3();
             var bus = Bus.New<IContentModel3>()
-                .WithStation<Simple.Station4>()
-                .WithStation<Simple.Station5>()
-                .WithStation<Simple.Station6>()
-                .WithStation<Simple.Station7>();
+                .WithStation<Station4>()
+                .WithStation<Station5>()
+                .WithStation<Station6>()
+                .WithStation<Station7>();
 
-            bus.Go(content);
+            Assert.Throws<System.Reflection.TargetException>(() => bus.Go(content));
         }
 
         /// <summary>
@@ -64,12 +64,13 @@ namespace LightPath.Cargo.Tests.Integration
         {
             var content = new ContentModel3();
             var bus = Bus.New<ContentModel3>()
-                .WithStation<Simple.Station4>()
-                .WithStation<Simple.Station5>()
-                .WithStation<Simple.Station6>()
-                .WithStation<Simple.Station7>();
+                .WithStation<Station4>()
+                .WithStation<Station5>()
+                .WithStation<Station6>()
+                .WithStation<Station7>();
 
-            bus.Go(content);
+            // maybe someday we can mix interfaces/implementation in the stations
+            Assert.Throws<System.Reflection.TargetException>(() => bus.Go(content));
         }
     }
 }
