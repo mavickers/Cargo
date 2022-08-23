@@ -1,10 +1,6 @@
-﻿using System;
+﻿using LightPath.Cargo.Tests.Integration.Common;
 using System.Linq;
-using System.Runtime.Remoting;
-using LightPath.Cargo.Tests.Integration.Common;
-using LightPath.Cargo.Tests.Unit;
 using Xunit;
-using static LightPath.Cargo.Tests.Integration.Stations.Finalize;
 
 namespace LightPath.Cargo.Tests.Integration
 {
@@ -31,7 +27,7 @@ namespace LightPath.Cargo.Tests.Integration
             Assert.False(bus.Package.IsErrored);
             Assert.False(bus.Package.IsAborted);
             Assert.Equal(29, content.IntVal);
-            Assert.Equal(3, bus.Package.Results.Count(r => r.WasSkipped));
+            Assert.Equal(0, bus.Package.Results.Count(r => r.IsAborting));
         }
 
         /// <summary>
@@ -54,9 +50,8 @@ namespace LightPath.Cargo.Tests.Integration
 
             Assert.False(bus.Package.IsErrored);
             Assert.True(bus.Package.IsAborted);
-            Assert.Equal(21, content.IntVal);
-            Assert.Equal(0, bus.Package.Results.Count(r => r.WasSkipped));
-            Assert.Equal(1, bus.Package.Results.Count(r => r.WasAborted));
+            Assert.Equal(1, content.IntVal);
+            Assert.Equal(1, bus.Package.Results.Count(r => r.IsAborting));
         }
 
         /// <summary>
@@ -79,8 +74,8 @@ namespace LightPath.Cargo.Tests.Integration
             bus.Go(content);
 
             Assert.True(bus.Package.IsErrored);
-            Assert.False(bus.Package.IsAborted);
-            Assert.Equal(29, content.IntVal);
+            Assert.True(bus.Package.IsAborted);
+            Assert.Equal(9, content.IntVal);
 
             bus.WithNoAbortOnError().Go(content);
 
@@ -105,8 +100,9 @@ namespace LightPath.Cargo.Tests.Integration
             bus.Go(content);
 
             Assert.True(bus.Package.IsErrored);
-            Assert.False(bus.Package.IsAborted);
-            Assert.True(bus.Package.Results.Last().Exception is System.NotImplementedException);
+            Assert.True(bus.Package.IsAborted);
+            Assert.True(bus.Package.Results.Last().Exception is System.Reflection.TargetInvocationException);
+            Assert.True(bus.Package.Results.Last().Exception.InnerException is System.NotImplementedException);
         }
     }
 }

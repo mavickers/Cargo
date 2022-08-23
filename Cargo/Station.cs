@@ -7,76 +7,102 @@ namespace LightPath.Cargo
 {
     public static class Station
     {
-        public enum Output
+        public struct Action
         {
-            Unknown = 1,
-            Succeeded,
-            Failed,
-            Skipped,
-            Aborted,
-        }
-
-        private static readonly Dictionary<Type, Output> OutputMaps = new Dictionary<Type, Output>
-        {
-            { typeof(AbortException), Output.Aborted },
-            { typeof(SkipException), Output.Skipped }
-        };
-
-        public static class Result
-        {
-            public static Result<T> New<T>(Station<T> station, Output output, Exception exception = null) where T : class
+            public enum ActionTypes
             {
-                return new Result<T>(station, output, exception);
+                Abort = 1,
+                Next,
+                Repeat
+            }
+
+            private string _actionMessage { get; set; }
+            private Exception _exception { get; set; }
+
+            private ActionTypes _type { get; }
+
+            public string ActionMessage => _actionMessage;
+
+            public ActionTypes ActionType => _type;
+
+            private Action(ActionTypes type)
+            {
+                _actionMessage = null;
+                _exception = null;
+                _type = type;
+            }
+
+            public static Action Abort() => new Action(ActionTypes.Abort);
+            public static Action Abort(Exception abortException) => Abort().WithException(abortException);
+            public static Action Abort(string abortMessage) => Abort().WithMessage(abortMessage);
+            public static Action Next() => new Action(ActionTypes.Next);
+            public static Action Next(Exception nextException) => Next().WithException(nextException);
+            public static Action Next(string nextMessage) => Next().WithMessage(nextMessage);
+            public static Action Repeat() => new Action(ActionTypes.Repeat);
+            public static Action Repeat(Exception repeatException) => Next().WithException(repeatException);
+            public static Action Repeat(string repeatMessage) => Next().WithMessage(repeatMessage);
+
+            public Action WithException(Exception exception)
+            {
+                _exception = exception;
+
+                return this;
+            }
+
+            public Action WithMessage(string message)
+            {
+                _actionMessage = message;
+
+                return this;
             }
         }
 
-        public class Result<T>
+        public enum Output
         {
-            internal Station<T> _station { get; }
+            Succeeded,
+            Failed
+        }
+
+        public class Result
+        {
+            internal Action _action { get; }
+            internal Type _station { get; }
             internal Output _output { get; }
             internal Exception _exception { get; }
 
             public Exception Exception => _exception;
             public Type Station => _station?.GetType();
-            public bool WasAborted => _output == Output.Aborted;
-            public bool WasFail => _output == Output.Failed;
-            public bool WasSkipped => _output == Output.Skipped;
+            public bool IsAborting => _action.ActionType == Action.ActionTypes.Abort;
+            public bool IsRepeating => _action.ActionType == Action.ActionTypes.Repeat;
+            public bool WasFailure => _output == Output.Failed;
             public bool WasSuccess => _output == Output.Succeeded;
-            public bool WasUnknown => _output == Output.Unknown;
 
-            internal Result(Station<T> station, Output output, Exception exception = null)
+            internal Result(Type stationType, Action action, Output output, Exception exception = null)
             {
-                _station = station ?? throw new ArgumentException(nameof(station));
+                _action = action;
+                _station = stationType ?? throw new ArgumentException(nameof(stationType));
                 _output = output;
                 _exception = exception;
             }
-        }
 
-        public class AbortException : Exception
-        {
-            public AbortException(string message) : base(message) { }
-        }
-
-        public class SkipException : Exception
-        {
-            public SkipException(string message) : base(message) { }
+            public static Result New(Type stationType, Action action, Output output, Exception exception = null)
+            {
+                return new Result(stationType, action, output, exception);
+            }
         }
     }
 
-    public abstract class Station<T>
+    public abstract class Station<TContent> where TContent : class
     {
         // package value will be injected by the bus when it runs
 
-        private Package<T> _package { get; set; }
-        private bool _repeat { get; set; }
+        private Package<TContent> _package { get; set; }
 
-        protected T Contents => _package.Contents;
-        protected Station.Result<T> LastResult => _package.Results.Last();
+        protected TContent Contents => _package.Contents;
+        protected Station.Result LastResult => _package.Results.Last();
 
         public bool IsErrored => _package.IsErrored;
-        public bool IsRepeat => _repeat;
-        public bool NotRepeat => !_repeat;
-        public List<Station.Result<T>> PackageResults => _package.Results;
+        public List<Station.Result> PackageResults => _package.Results;
 
         public TService GetService<TService>()
         {
@@ -85,9 +111,9 @@ namespace LightPath.Cargo
             return (TService)_package.Services[typeof(TService)];
         }
 
-        public bool TryGetService<TService>(out TService output) where TService : class
-        {
             output = default;
+        {
+        public bool TryGetService<TService>(out TService output) where TService : class
 
             try
             {
@@ -102,17 +128,6 @@ namespace LightPath.Cargo
         }
 
         public static Type Type => MethodBase.GetCurrentMethod()?.DeclaringType;
-
-        public void Abort(string message = "Aborted")
-        {
-            _package.Abort(message);
-
-            throw new Station.AbortException(message);
-        }
-        public abstract void Process();
-        public void Skip(string message = "Skipped") => throw new Station.SkipException(message);
-
-        public void NoRepeat() => _repeat = false;
-        public void Repeat() => _repeat = true;
+        public abstract Station.Action Process();
     }
 }

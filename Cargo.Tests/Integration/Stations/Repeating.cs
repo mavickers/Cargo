@@ -6,37 +6,41 @@ namespace LightPath.Cargo.Tests.Integration.Stations
     {
         public class Station1 : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
                 Contents.IntVal = 1;
+
+                return Station.Action.Next();
             }
         }
 
         public class Station2 : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
                 Contents.IntVal += 2;
 
-                if (Contents.IntVal <= 100) Repeat();
+                return Contents.IntVal <= 100 ? Station.Action.Repeat() : Station.Action.Next();
             }
         }
 
         public class Station3 : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
                 Contents.IntVal += 3;
+
+                return Station.Action.Next();
             }
         }
 
         public class Station4 : Station<ContentModel2>
         {
-            public override void Process()
+            public override Station.Action Process()
             {
                 Contents.IntVal += 1;
 
-                if (Contents.IntVal <= 1000) Repeat();
+                return Contents.IntVal <= 1000 ? Station.Action.Repeat() : Station.Action.Next();
             }
         }
     }
