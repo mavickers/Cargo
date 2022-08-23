@@ -15,12 +15,13 @@ namespace LightPath.Cargo.Tests.Integration
                          .WithStation<Stations.Services.Station1>()
                          .WithStation<Stations.Services.Station2>()
                          .WithStation<Stations.Services.Station2>()
-                         .WithStation<Stations.Services.Station3>();
+                         .WithStation<Stations.Services.Station3>()
+                         .WithStation<Stations.Services.Station4>();
 
             bus.Go(content);
 
             Assert.False(bus.Package.IsErrored);
-            Assert.Equal(8, content.Int1);
+            Assert.Equal(11, content.Int1);
         }
     }
 }

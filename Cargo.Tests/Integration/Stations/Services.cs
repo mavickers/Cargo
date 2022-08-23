@@ -1,5 +1,6 @@
 ﻿using LightPath.Cargo.Tests.Integration.Common;
 using System;
+using Xunit;
 
 namespace LightPath.Cargo.Tests.Integration.Stations
 {
@@ -43,6 +44,26 @@ namespace LightPath.Cargo.Tests.Integration.Stations
                 if (service == null) throw new Exception("Could not locate service");
 
                 Contents.Int1 = service.AddThree(Contents.Int1);
+            }
+        }
+
+        public class Station4 : Station<ContentModel1>
+        {
+            public override Station.Action Process()
+            {
+                var result1 = TryGetService<Interface1>(out var service);
+
+                Assert.True(result1);
+                Assert.NotNull(service);
+
+                Contents.Int1 = service.AddThree(Contents.Int1);
+
+                var result2 = TryGetService<Exception>(out var exception);
+
+                Assert.False(result2);
+                Assert.Null(exception);
+
+                return Station.Action.Next();
             }
         }
     }
