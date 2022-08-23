@@ -85,7 +85,23 @@ namespace LightPath.Cargo
             return (TService)_package.Services[typeof(TService)];
         }
 
-        public static Type Type => MethodBase.GetCurrentMethod().DeclaringType;
+        public bool TryGetService<TService>(out TService output) where TService : class
+        {
+            output = default;
+
+            try
+            {
+                output = GetService<TService>();
+
+                return output != default;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static Type Type => MethodBase.GetCurrentMethod()?.DeclaringType;
 
         public void Abort(string message = "Aborted")
         {
