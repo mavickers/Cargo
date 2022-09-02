@@ -13,7 +13,8 @@ namespace LightPath.Cargo
             {
                 Abort = 1,
                 Next,
-                Repeat
+                Repeat,
+                Trace
             }
 
             private string _actionMessage { get; set; }
@@ -111,9 +112,11 @@ namespace LightPath.Cargo
             return (TService)_package.Services[typeof(TService)];
         }
 
-            output = default;
-        {
+        public void Trace(string message) => _package.Trace(message);
+
         public bool TryGetService<TService>(out TService output) where TService : class
+        {
+            output = default;
 
             try
             {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace LightPath.Cargo
@@ -14,6 +15,7 @@ namespace LightPath.Cargo
 
     public class Package<TContent> where TContent : class
     {
+        private List<string> _messages { get; }
         private bool _abort { get; set; }
         private Exception _abortedWith { get; set; }
         private Exception _exception { get; }
@@ -43,7 +45,8 @@ namespace LightPath.Cargo
             _executionId = Guid.NewGuid();
             _contents = isInstanceOf 
                 ? (TContent)parameters.First(p => p.GetType() == typeof(TContent)) 
-                : (TContent)parameters.First(p => p.GetType().GetInterfaces().Any(i => i == typeof(TContent))); 
+                : (TContent)parameters.First(p => p.GetType().GetInterfaces().Any(i => i == typeof(TContent)));
+            _messages = new List<string>();
 
             Results = new List<Station.Result>();
             Services = (Dictionary<Type, object>) parameters.FirstOrDefault(p => p is Dictionary<Type, object>) ?? new Dictionary<Type, object>();
@@ -84,5 +87,7 @@ namespace LightPath.Cargo
         {
             return new Package<TContent>(parameters);
         }
+
+        public void Trace(string message) => _messages.Add(message);
     }
 }

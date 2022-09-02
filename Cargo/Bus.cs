@@ -52,6 +52,8 @@ namespace LightPath.Cargo
             if (processMethod == null) throw new Exception("Bus.Go failed - unable to access processmethod");
 
             _package = Cargo.Package.New<TContent>(content, _services);
+            _package.Trace($"{typeof(TContent).FullName} begin trace");
+
             callback = callback ?? (arg => arg);
 
             while (currentStationIndex < stationList.Count)
@@ -60,6 +62,7 @@ namespace LightPath.Cargo
                 var isLastStation = stationList[currentStationIndex] == stationList.Last();
                 var currentStation = Activator.CreateInstance(stationList[currentStationIndex]);
                 var packageProperty = typeof(Station<TContent>).GetProperty("_package", BindingFlags.NonPublic | BindingFlags.Instance);
+                var stationPrefix = $"{stationList[currentStationIndex].FullName}";
 
                 if (currentStation == null) throw new Exception($"Unable to instantiate {stationList[currentStationIndex].FullName}");
                 if (packageProperty == null) throw new Exception("Unable to access package property");
@@ -70,9 +73,12 @@ namespace LightPath.Cargo
                 {
                     if (iteration > _stationRepeatLimit) throw new OverflowException("Bug.Go failed - station execution iterations exceeded repeat limit");
 
+                    _package.Trace($"{stationPrefix} begin");
+
                     var action = (Station.Action)processMethod.Invoke(currentStation, null);
                     var result = Station.Result.New(stationType, action, Succeeded);
 
+                    _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
                     _package.Results.Add(result);
                 }
                 catch (Exception exception)
@@ -80,6 +86,7 @@ namespace LightPath.Cargo
                     var action = _withAbortOnError ? Station.Action.Abort(exception) : Station.Action.Next(exception);
                     var result = Station.Result.New(stationType, action, Failed, exception);
 
+                    _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
                     _package.Results.Add(result);
                 }
 
@@ -97,6 +104,8 @@ namespace LightPath.Cargo
 
                 currentStationIndex += isRepeating ? 0 : gotoFinalStation ? stationList.Count - 1 : isAborting ? stationList.Count + 1 : 1;
             }
+
+            _package.Trace($"{typeof(TContent).FullName} end trace");
 
             return callback(content);
         }
