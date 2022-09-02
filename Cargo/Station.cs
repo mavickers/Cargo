@@ -112,6 +112,8 @@ namespace LightPath.Cargo
             return (TService)_package.Services[typeof(TService)];
         }
 
+        public IList<string> Messages => _package.Messages;
+
         public void Trace(string message) => _package.Trace(message);
 
         public bool TryGetService<TService>(out TService output) where TService : class

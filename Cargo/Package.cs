@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace LightPath.Cargo
@@ -31,6 +30,7 @@ namespace LightPath.Cargo
         public Station.Result LastStationResult => Results?.LastOrDefault();
         public List<Station.Result> Results { get; }
         internal readonly Dictionary<Type, object> Services;
+        public IList<string> Messages => _messages.AsReadOnly();
 
         private Package(params object[] parameters)
         {
