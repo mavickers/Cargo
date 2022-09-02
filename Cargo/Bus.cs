@@ -73,6 +73,7 @@ namespace LightPath.Cargo
                 {
                     if (iteration > _stationRepeatLimit) throw new OverflowException("Bug.Go failed - station execution iterations exceeded repeat limit");
 
+                    _package.Trace();
                     _package.Trace($"{stationPrefix} begin");
 
                     var action = (Station.Action)processMethod.Invoke(currentStation, null);

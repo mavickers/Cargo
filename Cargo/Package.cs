@@ -88,6 +88,7 @@ namespace LightPath.Cargo
             return new Package<TContent>(parameters);
         }
 
+        public void Trace() => _messages.Add(string.Empty);
         public void Trace(string message) => _messages.Add(message);
     }
 }

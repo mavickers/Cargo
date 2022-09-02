@@ -4,7 +4,7 @@
     <TargetFrameworks>net472;net48;net5.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>mavickers</Authors>
-    <Owners>lightpath</Owners>
+    <Owners>mavickers,lightpath</Owners>
     <Company>LightPath Solutions, LLC</Company>
     <Product>Cargo COR Library</Product>
     <Copyright>2022 LightPath Solutions, LLC</Copyright>
@@ -21,9 +21,9 @@
     <PackageTags>COR</PackageTags>
     <Description>A lightweight chain of responsibility library for .Net.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Version>2.0.2.1</Version>
-    <AssemblyVersion>2.0.2.1</AssemblyVersion>
-    <FileVersion>2.0.2.1</FileVersion>
+    <Version>2.0.2.2</Version>
+    <AssemblyVersion>2.0.2.2</AssemblyVersion>
+    <FileVersion>2.0.2.2</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
