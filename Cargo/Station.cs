@@ -71,6 +71,7 @@ namespace LightPath.Cargo
             internal Output _output { get; }
             internal Exception _exception { get; }
 
+            public string ActionMessage => _action.ActionMessage;
             public Exception Exception => _exception;
             public Type Station => _station?.GetType();
             public bool IsAborting => _action.ActionType == Action.ActionTypes.Abort;

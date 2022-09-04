@@ -106,6 +106,7 @@ namespace LightPath.Cargo
                 currentStationIndex += isRepeating ? 0 : gotoFinalStation ? stationList.Count - 1 : isAborting ? stationList.Count + 1 : 1;
             }
 
+            _package.Trace();
             _package.Trace($"{typeof(TContent).FullName} end trace");
 
             return callback(content);
