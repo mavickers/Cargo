@@ -39,8 +39,8 @@ namespace LightPath.Cargo.Tests.Integration
             var content = new ContentModel2();
             var bus = Bus.New<ContentModel2>()
                          .WithStation<Stations.Finalize.Station1>()
-                         .WithStation<Stations.Finalize.Station3>()
                          .WithStation<Stations.Finalize.Station2>()
+                         .WithStation<Stations.Finalize.Station3>()
                          .WithStation<Stations.Finalize.Station4>()
                          .WithFinalStation<Stations.Finalize.FinalStation>();
 
@@ -50,7 +50,7 @@ namespace LightPath.Cargo.Tests.Integration
 
             Assert.False(bus.Package.IsErrored);
             Assert.True(bus.Package.IsAborted);
-            Assert.Equal(1, content.IntVal);
+            Assert.Equal(21, content.IntVal);
             Assert.Equal(1, bus.Package.Results.Count(r => r.IsAborting));
         }
 

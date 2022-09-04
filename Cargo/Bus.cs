@@ -103,7 +103,7 @@ namespace LightPath.Cargo
                 // if we aborted then go past the total count (this will end the loop)
                 // otherwise increment the index
 
-                currentStationIndex += isRepeating ? 0 : gotoFinalStation ? stationList.Count - 1 : isAborting ? stationList.Count + 1 : 1;
+                currentStationIndex += isRepeating ? 0 : gotoFinalStation ? stationList.Count - currentStationIndex - 1 : isAborting ? stationList.Count + 1 : 1;
             }
 
             _package.Trace();
