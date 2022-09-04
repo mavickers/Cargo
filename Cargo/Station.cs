@@ -22,6 +22,7 @@ namespace LightPath.Cargo
 
             private ActionTypes _type { get; }
 
+            public Exception ActionException => _exception;
             public string ActionMessage => _actionMessage;
 
             public ActionTypes ActionType => _type;
@@ -71,6 +72,7 @@ namespace LightPath.Cargo
             internal Output _output { get; }
             internal Exception _exception { get; }
 
+            public Exception ActionException => _action.ActionException;
             public string ActionMessage => _action.ActionMessage;
             public Exception Exception => _exception;
             public Type Station => _station?.GetType();
