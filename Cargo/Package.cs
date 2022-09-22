@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -14,7 +15,7 @@ namespace LightPath.Cargo
 
     public class Package<TContent> where TContent : class
     {
-        private List<string> _messages { get; }
+        private ConcurrentBag<string> _messages { get; }
         private bool _abort { get; set; }
         private Exception _abortedWith { get; set; }
         private Exception _exception { get; }
@@ -30,7 +31,7 @@ namespace LightPath.Cargo
         public Station.Result LastStationResult => Results?.LastOrDefault();
         public List<Station.Result> Results { get; }
         internal readonly Dictionary<Type, object> Services;
-        public IList<string> Messages => _messages.AsReadOnly();
+        public IList<string> Messages => _messages.ToList().AsReadOnly();
 
         private Package(params object[] parameters)
         {
@@ -46,7 +47,7 @@ namespace LightPath.Cargo
             _contents = isInstanceOf 
                 ? (TContent)parameters.First(p => p.GetType() == typeof(TContent)) 
                 : (TContent)parameters.First(p => p.GetType().GetInterfaces().Any(i => i == typeof(TContent)));
-            _messages = new List<string>();
+            _messages = new ConcurrentBag<string>();
 
             Results = new List<Station.Result>();
             Services = (Dictionary<Type, object>) parameters.FirstOrDefault(p => p is Dictionary<Type, object>) ?? new Dictionary<Type, object>();
