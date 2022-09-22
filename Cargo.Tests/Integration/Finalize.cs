@@ -75,7 +75,7 @@ namespace LightPath.Cargo.Tests.Integration
 
             Assert.True(bus.Package.IsErrored);
             Assert.True(bus.Package.IsAborted);
-            Assert.Equal(9, content.IntVal);
+            Assert.Equal(29, content.IntVal);
 
             bus.WithNoAbortOnError().Go(content);
 

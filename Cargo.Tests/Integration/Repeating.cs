@@ -36,14 +36,15 @@ namespace LightPath.Cargo.Tests.Integration
             var bus = Bus.New<ContentModel2>()
                 .WithStation<Station1>()
                 .WithStation<Station4>()
+                .WithStation<Station1>()
                 .WithStation<Station3>();
 
             bus.Go(content);
 
             Assert.True(bus.Package.IsAborted);
             Assert.True(bus.Package.IsErrored);
-            Assert.True(bus.Package.Results.Last().Exception is System.OverflowException);
-            Assert.Equal(101, content.IntVal);
+            Assert.True(bus.Package.Results.Last(r => r.Exception != null).Exception is System.OverflowException);
+            Assert.Equal(104, content.IntVal);
         }
 
         /// <summary>
