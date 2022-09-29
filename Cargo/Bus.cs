@@ -1,4 +1,6 @@
 ﻿using System;
+using System.CodeDom;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -31,8 +33,8 @@ namespace LightPath.Cargo
         private Type _finalStation { get; set; }
         private Package<TContent> _package { get; set; }
         private int _stationRepeatLimit { get; set; } = 100;
-        private List<Type> _stations { get; } = new List<Type>();
-        private Dictionary<Type, object> _services { get; } = new Dictionary<Type, object>();
+        private ConcurrentQueue<Type> _stations { get; } = new ConcurrentQueue<Type>();
+        private ConcurrentDictionary<Type, object> _services { get; } = new ConcurrentDictionary<Type, object>();
         private bool _withAbortOnError { get; set; } = true;
 
         public Package<TContent> Package => _package;
@@ -123,14 +125,14 @@ namespace LightPath.Cargo
 
         public Bus<TContent> WithService<TService>(TService service)
         {
-            if (service != null) _services.Add(typeof(TService), service);
+            if (service != null && !_services.TryAdd(typeof(TService), service)) throw new Exception("Unable to update services dictionary");
 
             return this;
         }
 
         public Bus<TContent> WithStation<TStation>()
         {
-            _stations.Add(typeof(TStation));
+            _stations.Enqueue(typeof(TStation));
 
             return this;
         }

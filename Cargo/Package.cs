@@ -30,7 +30,7 @@ namespace LightPath.Cargo
         public bool IsErrored => Results?.Any(r => r.WasFailure) ?? false;
         public Station.Result LastStationResult => Results?.LastOrDefault();
         public ConcurrentQueue<Station.Result> Results { get; }
-        internal readonly Dictionary<Type, object> Services;
+        internal readonly ConcurrentDictionary<Type, object> Services;
         public IList<string> Messages => _messages.ToList().AsReadOnly();
 
         private Package(params object[] parameters)
@@ -50,7 +50,7 @@ namespace LightPath.Cargo
             _messages = new ConcurrentQueue<string>();
 
             Results = new ConcurrentQueue<Station.Result>();
-            Services = (Dictionary<Type, object>) parameters.FirstOrDefault(p => p is Dictionary<Type, object>) ?? new Dictionary<Type, object>();
+            Services = (ConcurrentDictionary<Type, object>) parameters.FirstOrDefault(p => p is ConcurrentDictionary<Type, object>) ?? new ConcurrentDictionary<Type, object>();
         }
 
         internal void Abort(Exception exception = null)

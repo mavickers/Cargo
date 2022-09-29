@@ -106,7 +106,7 @@ namespace LightPath.Cargo
         protected Station.Result LastResult => _package.Results.Last();
 
         public bool IsErrored => _package.IsErrored;
-        public List<Station.Result> PackageResults => _package.Results.ToList();
+        public IList<Station.Result> PackageResults => _package.Results.ToList().AsReadOnly();
 
         public TService GetService<TService>()
         {
