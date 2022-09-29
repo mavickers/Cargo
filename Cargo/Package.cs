@@ -15,7 +15,7 @@ namespace LightPath.Cargo
 
     public class Package<TContent> where TContent : class
     {
-        private ConcurrentBag<string> _messages { get; }
+        private ConcurrentQueue<string> _messages { get; }
         private bool _abort { get; set; }
         private Exception _abortedWith { get; set; }
         private Exception _exception { get; }
@@ -29,7 +29,7 @@ namespace LightPath.Cargo
         public bool IsAborted => Results?.Any(r => r.IsAborting) ?? false;
         public bool IsErrored => Results?.Any(r => r.WasFailure) ?? false;
         public Station.Result LastStationResult => Results?.LastOrDefault();
-        public List<Station.Result> Results { get; }
+        public ConcurrentQueue<Station.Result> Results { get; }
         internal readonly Dictionary<Type, object> Services;
         public IList<string> Messages => _messages.ToList().AsReadOnly();
 
@@ -47,9 +47,9 @@ namespace LightPath.Cargo
             _contents = isInstanceOf 
                 ? (TContent)parameters.First(p => p.GetType() == typeof(TContent)) 
                 : (TContent)parameters.First(p => p.GetType().GetInterfaces().Any(i => i == typeof(TContent)));
-            _messages = new ConcurrentBag<string>();
+            _messages = new ConcurrentQueue<string>();
 
-            Results = new List<Station.Result>();
+            Results = new ConcurrentQueue<Station.Result>();
             Services = (Dictionary<Type, object>) parameters.FirstOrDefault(p => p is Dictionary<Type, object>) ?? new Dictionary<Type, object>();
         }
 
@@ -81,7 +81,7 @@ namespace LightPath.Cargo
         {
             if (result == null) throw new ArgumentException("AddResult \"result\" parameter is null");
 
-            Results.Add(result);
+            Results.Enqueue(result);
         }
 
         public static Package<TContent> New(params object[] parameters)
@@ -89,7 +89,7 @@ namespace LightPath.Cargo
             return new Package<TContent>(parameters);
         }
 
-        public void Trace() => _messages.Add(string.Empty);
-        public void Trace(string message) => _messages.Add(message);
+        public void Trace() => _messages.Enqueue(string.Empty);
+        public void Trace(string message) => _messages.Enqueue(message);
     }
 }

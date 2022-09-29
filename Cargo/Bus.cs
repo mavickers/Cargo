@@ -80,7 +80,7 @@ namespace LightPath.Cargo
                     var result = Station.Result.New(stationType, action, Succeeded);
 
                     _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
-                    _package.Results.Add(result);
+                    _package.Results.Enqueue(result);
                 }
                 catch (Exception exception)
                 {
@@ -88,7 +88,7 @@ namespace LightPath.Cargo
                     var result = Station.Result.New(stationType, action, Failed, exception);
 
                     _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
-                    _package.Results.Add(result);
+                    _package.Results.Enqueue(result);
                 }
 
                 var isRepeating = _package.LastStationResult?.IsRepeating ?? false;
