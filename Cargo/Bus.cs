@@ -127,6 +127,19 @@ namespace LightPath.Cargo
             return this;
         }
 
+        public Bus<TContent> WithServices(params object[] services)
+        {
+            foreach (var service in services)
+            {
+                var interfaces = service.GetType().GetInterfaces();
+                var declaredType = interfaces.Length == 1 ? interfaces[0] : service.GetType();
+
+                if (service != null && !_services.TryAdd(declaredType, service)) throw new Exception("Unable to update services dictionary");
+            }
+
+            return this;
+        }
+
         public Bus<TContent> WithStation<TStation>()
         {
             _stations.Enqueue(typeof(TStation));
