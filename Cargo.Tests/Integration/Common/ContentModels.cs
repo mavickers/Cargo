@@ -1,5 +1,6 @@
 ﻿namespace LightPath.Cargo.Tests.Integration.Common
 {
+    public abstract class ContentModelAbstract1 { }
     public class ContentModel1
     {
         public string String1 { get; set; }
@@ -36,5 +37,15 @@
         public string String4 { get; set; }
         public int Int1 { get; set; }
         public int Int2 { get; set; }
+    }
+
+    public class ContentModel4 : ContentModel1
+    {
+        public ContentModel4() : base() { }
+    }
+
+    public class ContentModel5 : ContentModelAbstract1
+    {
+        public ContentModel5() : base() { }
     }
 }

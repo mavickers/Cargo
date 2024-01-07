@@ -1,8 +1,5 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using static LightPath.Cargo.Station.Output;
@@ -130,9 +127,37 @@ namespace LightPath.Cargo
             return this;
         }
 
+        public Bus<TContent> WithServices(params object[] services)
+        {
+            foreach (var service in services)
+            {
+                var interfaces = service.GetType().GetInterfaces();
+                var declaredType = interfaces.Length == 1 ? interfaces[0] : service.GetType();
+
+                if (service != null && !_services.TryAdd(declaredType, service)) throw new Exception("Unable to update services dictionary");
+            }
+
+            return this;
+        }
+
         public Bus<TContent> WithStation<TStation>()
         {
             _stations.Enqueue(typeof(TStation));
+
+            return this;
+        }
+
+        public Bus<TContent> WithStations(params Type[] stationTypes)
+        {
+            if (stationTypes == null) return this;
+            if (stationTypes.Length == 0) return this;
+
+            foreach (var stationType in stationTypes)
+            {
+                if (!stationType.BaseType?.FullName?.StartsWith("LightPath.Cargo.Station") ?? true) continue;
+
+                _stations.Enqueue(stationType);
+            }
 
             return this;
         }
