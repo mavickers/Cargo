@@ -1,5 +1,4 @@
 ﻿using LightPath.Cargo.Tests.Integration.Common;
-using LightPath.Cargo.Tests.Integration.Stations;
 using Xunit;
 using static LightPath.Cargo.Tests.Integration.Stations.Simple;
 
@@ -8,13 +7,65 @@ namespace LightPath.Cargo.Tests.Integration
     public class SimpleTests
     {
         [Fact]
-        public void Scenario1()
+        public void Scenario1A()
         {
             var content = new ContentModel1();
             var bus = Bus.New<ContentModel1>()
-                               .WithStation<Station1>()
-                               .WithStation<Station2>()
-                               .WithStation<Station3>();
+                         .WithStation<Station1>()
+                         .WithStation<Station2>()
+                         .WithStation<Station3>();
+
+            bus.Go(content);
+
+            Assert.Equal(6, content.Int1);
+            Assert.Equal("1", content.String1);
+            Assert.Equal("3", content.String2);
+            Assert.Equal("6", content.String3);
+            Assert.Equal(3, bus.Package.Results.Count);
+
+            bus.Go(content);
+
+            Assert.Equal(12, content.Int1);
+            Assert.Equal("7", content.String1);
+            Assert.Equal("9", content.String2);
+            Assert.Equal("12", content.String3);
+            Assert.Equal(3, bus.Package.Results.Count);
+
+            Assert.False(bus.Package.IsAborted);
+            Assert.False(bus.Package.IsErrored);
+        }
+
+        [Fact]
+        public void Scenario1B()
+        {
+            var content = new ContentModel1();
+            var bus = Bus.New<ContentModel1>().WithStations(typeof(Station1), typeof(Station2), typeof(Station3));
+
+            bus.Go(content);
+
+            Assert.Equal(6, content.Int1);
+            Assert.Equal("1", content.String1);
+            Assert.Equal("3", content.String2);
+            Assert.Equal("6", content.String3);
+            Assert.Equal(3, bus.Package.Results.Count);
+
+            bus.Go(content);
+
+            Assert.Equal(12, content.Int1);
+            Assert.Equal("7", content.String1);
+            Assert.Equal("9", content.String2);
+            Assert.Equal("12", content.String3);
+            Assert.Equal(3, bus.Package.Results.Count);
+
+            Assert.False(bus.Package.IsAborted);
+            Assert.False(bus.Package.IsErrored);
+        }
+
+        [Fact]
+        public void Scenario1C()
+        {
+            var content = new ContentModel1();
+            var bus = Bus.New<ContentModel1>().WithStations(typeof(string), typeof(Station1), typeof(Station2), typeof(Station3));
 
             bus.Go(content);
 
@@ -71,6 +122,18 @@ namespace LightPath.Cargo.Tests.Integration
 
             // maybe someday we can mix interfaces/implementation in the stations
             Assert.Throws<System.Reflection.TargetException>(() => bus.Go(content));
+        }
+
+        [Fact]
+        public void Scenario4()
+        {
+            var content4 = new ContentModel4();
+            var content5 = new ContentModel5();
+            var busA = Bus.New<ContentModel4>().WithStation<Station8>();
+            var busB = Bus.New<ContentModel5>().WithStation<Station9>();
+            
+            busA.Go(content4);
+            busB.Go(content5);
         }
     }
 }

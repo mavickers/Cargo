@@ -80,5 +80,21 @@ namespace LightPath.Cargo.Tests.Integration.Stations
                 return Station.Action.Next();
             }
         }
+
+        public class Station8 : Station<ContentModel4>
+        {
+            public override Station.Action Process()
+            {
+                return Station.Action.Next();
+            }
+        }
+
+        public class Station9 : Station<ContentModel5>
+        {
+            public override Station.Action Process()
+            {
+                return Station.Action.Next();
+            }
+        }
     }
 }
