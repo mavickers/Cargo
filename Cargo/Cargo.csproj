@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net472;net48;net5.0</TargetFrameworks>
+    <TargetFrameworks>net472;net48;net6.0;.net7.0;.net8.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>mavickers</Authors>
     <Owners>mavickers,lightpath</Owners>
@@ -21,9 +21,9 @@
     <PackageTags>COR</PackageTags>
     <Description>A lightweight chain of responsibility library for .Net.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Version>2.0.3.5</Version>
-    <AssemblyVersion>2.0.3.5</AssemblyVersion>
-    <FileVersion>2.0.3.5</FileVersion>
+    <Version>2.0.4.0</Version>
+    <AssemblyVersion>2.0.4.0</AssemblyVersion>
+    <FileVersion>2.0.4.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
