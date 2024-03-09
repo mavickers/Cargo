@@ -1,12 +1,12 @@
 using LightPath.Cargo.Tests.Unit.Common;
 using Xunit;
 
-namespace LightPath.Cargo.Tests.Unit
+namespace LightPath.Cargo.Tests.Unit.Bus
 {
-    public class Bus
+    public class Instantiation
     {
         [Fact]
-        public void Instantiation()
+        public void Basic()
         {
             var bus1 = Cargo.Bus.New<ContentModel1>();
 
