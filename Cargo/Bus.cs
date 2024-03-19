@@ -70,7 +70,7 @@ namespace LightPath.Cargo
 
                 try
                 {
-                    if (iteration > _stationRepeatLimit) throw new OverflowException("Bug.Go failed - station execution iterations exceeded repeat limit");
+                    if (iteration > _stationRepeatLimit) throw new OverflowException("Bus.Go failed - station execution iterations exceeded repeat limit");
 
                     _package.Trace();
                     _package.Trace($"{stationPrefix} begin");
