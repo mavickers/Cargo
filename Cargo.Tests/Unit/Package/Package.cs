@@ -28,7 +28,6 @@ namespace LightPath.Cargo.Tests.Unit.Package
             Assert.NotNull(package1.Results);
             Assert.Empty(package1.Results);
             Assert.Equal(package1.Contents, contents1);
-            Assert.Null(package1.AbortedWith);
             Assert.NotEqual(package1.ExecutionId, Guid.Empty);
 
             var contents2 = new ContentModel2("testing123");

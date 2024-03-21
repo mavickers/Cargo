@@ -16,12 +16,9 @@ namespace LightPath.Cargo
     public class Package<TContent> where TContent : class
     {
         private ConcurrentQueue<string> _messages { get; }
-        private bool _abort { get; set; }
-        private Exception _abortedWith { get; set; }
         private Guid _executionId { get; }
         private readonly TContent _contents;
 
-        public Exception AbortedWith => _abortedWith;
         public TContent Contents => _contents;
         public Guid ExecutionId => _executionId;
         public bool IsAborted => Results?.Any(r => r.IsAborting) ?? false;
@@ -39,7 +36,6 @@ namespace LightPath.Cargo
 
             if (!isInheriting && !isInstanceOf) throw new ArgumentException($"Package parameters must inherit or be an instance of {typeof(TContent).FullName}");
 
-            _abort = false;
             _executionId = Guid.NewGuid();
             _contents = isInstanceOf 
                 ? (TContent)parameters.First(p => p.GetType() == typeof(TContent)) 
@@ -48,30 +44,6 @@ namespace LightPath.Cargo
 
             Results = new ConcurrentQueue<Station.Result>();
             Services = (ConcurrentDictionary<Type, object>) parameters.FirstOrDefault(p => p is ConcurrentDictionary<Type, object>) ?? new ConcurrentDictionary<Type, object>();
-        }
-
-        internal void Abort(Exception exception = null)
-        {
-            _abort = true;
-            _abortedWith = exception ?? new Exception("N/A");
-        }
-
-        internal void Abort(string exceptionMessage)
-        {
-            var message = string.IsNullOrEmpty(exceptionMessage) ? "N/A" : exceptionMessage;
-
-            _abort = true;
-            _abortedWith = new Exception(message);
-        }
-
-        internal void AbortIf(bool condition, Exception exception = null)
-        {
-            if (condition) Abort(exception);
-        }
-
-        internal void AbortIf(bool condition, string exceptionMessage)
-        {
-            if (condition) Abort(exceptionMessage);
         }
 
         internal void AddResult(Station.Result result)
