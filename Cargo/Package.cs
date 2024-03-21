@@ -46,13 +46,6 @@ namespace LightPath.Cargo
             Services = (ConcurrentDictionary<Type, object>) parameters.FirstOrDefault(p => p is ConcurrentDictionary<Type, object>) ?? new ConcurrentDictionary<Type, object>();
         }
 
-        internal void AddResult(Station.Result result)
-        {
-            if (result == null) throw new ArgumentException("AddResult \"result\" parameter is null");
-
-            Results.Enqueue(result);
-        }
-
         public static Package<TContent> New(params object[] parameters)
         {
             return new Package<TContent>(parameters);

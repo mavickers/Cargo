@@ -1,4 +1,7 @@
-﻿using LightPath.Cargo.Tests.Integration.Common;
+﻿using System;
+using System.Linq;
+using LightPath.Cargo.Tests.Integration.Common;
+using Xunit;
 
 namespace LightPath.Cargo.Tests.Integration.Stations
 {
@@ -101,7 +104,35 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                throw new System.NotImplementedException();
+                throw new NotImplementedException();
+            }
+        }
+
+        public class Station11 : Station<ContentModel5>
+        {
+            public override Station.Action Process()
+            {
+                var message = "this is a test";
+
+                Assert.True(Package.Contents == Contents);
+                Assert.True(LastResult.WasFailure);
+                Assert.True(IsErrored);
+                Assert.True(PackageResults.Count == 1);
+
+                var result = PackageResults.First();
+
+                Assert.True(Package.Messages?.Any() ?? false);
+                Assert.True(Messages?.Any() ?? false);
+                Assert.True(result.WasFailure);
+                Assert.False(result.WasSuccess);
+                Assert.NotNull(result.ActionException);
+                Assert.True(result.ActionException is NotImplementedException);
+
+                Trace(message);
+
+                Assert.Equal(message, Messages.Last());
+
+                return Station.Action.Next();
             }
         }
     }

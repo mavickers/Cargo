@@ -85,7 +85,7 @@ namespace LightPath.Cargo
                 {
                     var actualException = exception is TargetInvocationException && exception.InnerException != null ? exception.InnerException : exception;
                     var action = _withAbortOnError ? Station.Action.Abort(actualException) : Station.Action.Next(actualException);
-                    var result = Station.Result.New(stationType, action, Failed, exception);
+                    var result = Station.Result.New(stationType, action, Failed, actualException);
 
                     _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
                     _package.Results.Enqueue(result);
