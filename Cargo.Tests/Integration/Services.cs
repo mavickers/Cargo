@@ -1,4 +1,6 @@
-﻿using LightPath.Cargo.Tests.Integration.Common;
+﻿using System;
+using LightPath.Cargo.Tests.Integration.Common;
+using Moq;
 using Xunit;
 
 namespace LightPath.Cargo.Tests.Integration
@@ -44,6 +46,14 @@ namespace LightPath.Cargo.Tests.Integration
 
             Assert.False(bus.Package.IsErrored);
             Assert.Equal(16, content.Int1);
+        }
+
+        [Fact]
+        public void TryGetService()
+        {
+            var station = new Stations.Simple.Station1();
+
+            Assert.False(station.TryGetService<string>(out _));
         }
     }
 }

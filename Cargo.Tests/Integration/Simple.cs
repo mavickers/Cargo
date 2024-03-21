@@ -154,12 +154,14 @@ namespace LightPath.Cargo.Tests.Integration
         public void Scenario5()
         {
             var content = new ContentModel5();
-            var bus = Bus.New<ContentModel5>().WithStations(typeof(Station10), typeof(Station11)).WithNoAbortOnError();
+            var bus = Bus.New<ContentModel5>().WithStations(typeof(Station10), typeof(Station11), typeof(Station12)).WithNoAbortOnError();
 
             bus.Go(content);
 
             Assert.True(bus.Package.IsErrored);
             Assert.True(bus.Package.LastStationResult.WasSuccess);
+            Assert.Contains(bus.Package.Results, result => result.ActionMessage == "next");
+            Assert.Equal("aborting", bus.Package.Results.Last().ActionMessage);
         }
     }
 }

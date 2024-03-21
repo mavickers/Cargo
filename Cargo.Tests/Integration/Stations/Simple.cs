@@ -3,6 +3,8 @@ using System.Linq;
 using LightPath.Cargo.Tests.Integration.Common;
 using Xunit;
 
+#pragma warning disable CS0618 // Type or member is obsolete
+
 namespace LightPath.Cargo.Tests.Integration.Stations
 {
     public class Simple
@@ -132,7 +134,15 @@ namespace LightPath.Cargo.Tests.Integration.Stations
 
                 Assert.Equal(message, Messages.Last());
 
-                return Station.Action.Next();
+                return Station.Action.Next("next");
+            }
+        }
+
+        public class Station12 : Station<ContentModel5>
+        {
+            public override Station.Action Process()
+            {
+                return Station.Action.Next("aborting");
             }
         }
     }

@@ -46,6 +46,9 @@ namespace LightPath.Cargo.Tests.Integration.Stations
             {
                 Package.Contents.Int1 += 1;
 
+                Assert.True(TryGetService<Interface1>(out _));
+                Assert.False(TryGetService<string>(out _));
+
                 return Station.Action.Next();
             }
         }
