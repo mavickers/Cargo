@@ -18,14 +18,12 @@ namespace LightPath.Cargo
         private ConcurrentQueue<string> _messages { get; }
         private bool _abort { get; set; }
         private Exception _abortedWith { get; set; }
-        private Exception _exception { get; }
         private Guid _executionId { get; }
         private readonly TContent _contents;
 
         public Exception AbortedWith => _abortedWith;
         public TContent Contents => _contents;
-        public Exception Exception => _exception;
-        internal Guid ExecutionId => _executionId;
+        public Guid ExecutionId => _executionId;
         public bool IsAborted => Results?.Any(r => r.IsAborting) ?? false;
         public bool IsErrored => Results?.Any(r => r.WasFailure) ?? false;
         public Station.Result LastStationResult => Results?.LastOrDefault();
@@ -42,7 +40,6 @@ namespace LightPath.Cargo
             if (!isInheriting && !isInstanceOf) throw new ArgumentException($"Package parameters must inherit or be an instance of {typeof(TContent).FullName}");
 
             _abort = false;
-            _exception = null;
             _executionId = Guid.NewGuid();
             _contents = isInstanceOf 
                 ? (TContent)parameters.First(p => p.GetType() == typeof(TContent)) 

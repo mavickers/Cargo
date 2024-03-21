@@ -1,11 +1,19 @@
 ﻿using LightPath.Cargo.Tests.Integration.Common;
+using System.Linq;
 using Xunit;
+using Xunit.Abstractions;
 using static LightPath.Cargo.Tests.Integration.Stations.Simple;
 
 namespace LightPath.Cargo.Tests.Integration
 {
     public class SimpleTests
     {
+        private readonly ITestOutputHelper _outputHelper;
+        public SimpleTests(ITestOutputHelper outputHelper)
+        {
+            _outputHelper = outputHelper;
+        }
+
         [Fact]
         public void Scenario1A()
         {
@@ -33,6 +41,11 @@ namespace LightPath.Cargo.Tests.Integration
 
             Assert.False(bus.Package.IsAborted);
             Assert.False(bus.Package.IsErrored);
+
+            // make sure the trace messages are being capture
+
+            Assert.EndsWith("begin trace", bus.Package.Messages.First());
+            Assert.EndsWith("end trace", bus.Package.Messages.Last());
         }
 
         [Fact]
