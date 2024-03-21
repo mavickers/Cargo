@@ -102,6 +102,8 @@ namespace LightPath.Cargo
 
         private Package<TContent> _package { get; set; }
 
+        protected Package<TContent> Package => _package;
+        [Obsolete("Use Package.Contents")]
         protected TContent Contents => _package.Contents;
         protected Station.Result LastResult => _package.Results.Last();
 
