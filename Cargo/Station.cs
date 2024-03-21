@@ -137,7 +137,6 @@ namespace LightPath.Cargo
             }
         }
 
-        public static Type Type => MethodBase.GetCurrentMethod()?.DeclaringType;
         public abstract Station.Action Process();
     }
 }
