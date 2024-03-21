@@ -44,7 +44,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 1;
+                Package.Contents.Int1 += 1;
 
                 return Station.Action.Next();
             }
@@ -54,7 +54,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 2;
+                Package.Contents.Int1 += 2;
 
                 return Station.Action.Next();
             }
@@ -68,7 +68,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
 
                 if (service == null) throw new Exception("Could not locate service");
 
-                Contents.Int1 = service.AddThree(Contents.Int1);
+                Package.Contents.Int1 = service.AddThree(Package.Contents.Int1);
 
                 return Station.Action.Next();
             }
@@ -82,7 +82,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
 
                 if (service == null) throw new Exception("Could not locate service");
 
-                Contents.Int1 = service.AddOne(Contents.Int1);
+                Package.Contents.Int1 = service.AddOne(Package.Contents.Int1);
 
                 return Station.Action.Next();
             }
@@ -97,7 +97,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
                 Assert.True(result1);
                 Assert.NotNull(service);
 
-                Contents.Int1 = service.AddThree(Contents.Int1);
+                Package.Contents.Int1 = service.AddThree(Package.Contents.Int1);
 
                 var result2 = TryGetService<Exception>(out var exception);
 
@@ -117,7 +117,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
                 Assert.True(result1);
                 Assert.NotNull(service);
 
-                Contents.Int1 = service.AddSeven(Contents.Int1);
+                Package.Contents.Int1 = service.AddSeven(Package.Contents.Int1);
 
                 var result2 = TryGetService<Exception>(out var exception);
 

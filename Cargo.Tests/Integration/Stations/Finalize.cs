@@ -9,7 +9,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.IntVal = 1;
+                Package.Contents.IntVal = 1;
 
                 return Station.Action.Next();
             }
@@ -35,7 +35,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.IntVal += 4;
+                Package.Contents.IntVal += 4;
 
                 return Station.Action.Next();
             }
@@ -53,7 +53,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.IntVal += 20;
+                Package.Contents.IntVal += 20;
 
                 return Station.Action.Next();
             }

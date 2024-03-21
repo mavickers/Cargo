@@ -8,7 +8,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.IntVal = 1;
+                Package.Contents.IntVal = 1;
 
                 return Station.Action.Next();
             }
@@ -18,9 +18,9 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.IntVal += 2;
+                Package.Contents.IntVal += 2;
 
-                return Contents.IntVal <= 100 ? Station.Action.Repeat() : Station.Action.Next();
+                return Package.Contents.IntVal <= 100 ? Station.Action.Repeat() : Station.Action.Next();
             }
         }
 
@@ -28,7 +28,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.IntVal += 3;
+                Package.Contents.IntVal += 3;
 
                 return Station.Action.Next();
             }
@@ -38,9 +38,9 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.IntVal += 1;
+                Package.Contents.IntVal += 1;
 
-                return Contents.IntVal <= 1000 ? Station.Action.Repeat() : Station.Action.Next();
+                return Package.Contents.IntVal <= 1000 ? Station.Action.Repeat() : Station.Action.Next();
             }
         }
     }
