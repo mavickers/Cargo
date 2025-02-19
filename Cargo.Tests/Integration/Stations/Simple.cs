@@ -1,4 +1,9 @@
-﻿using LightPath.Cargo.Tests.Integration.Common;
+﻿using System;
+using System.Linq;
+using LightPath.Cargo.Tests.Integration.Common;
+using Xunit;
+
+#pragma warning disable CS0618 // Type or member is obsolete
 
 namespace LightPath.Cargo.Tests.Integration.Stations
 {
@@ -8,8 +13,8 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 1;
-                Contents.String1 = Contents.Int1.ToString();
+                Package.Contents.Int1 += 1;
+                Package.Contents.String1 = Package.Contents.Int1.ToString();
 
                 return Station.Action.Next();
             }
@@ -19,8 +24,8 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 2;
-                Contents.String2 = Contents.Int1.ToString();
+                Package.Contents.Int1 += 2;
+                Package.Contents.String2 = Package.Contents.Int1.ToString();
 
                 return Station.Action.Next();
             }
@@ -30,8 +35,8 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 3;
-                Contents.String3 = Contents.Int1.ToString();
+                Package.Contents.Int1 += 3;
+                Package.Contents.String3 = Package.Contents.Int1.ToString();
                 
                 return Station.Action.Next();
             }
@@ -41,8 +46,8 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 2;
-                Contents.String3 = Contents.Int1.ToString();
+                Package.Contents.Int1 += 2;
+                Package.Contents.String3 = Package.Contents.Int1.ToString();
 
                 return Station.Action.Next();
             }
@@ -52,8 +57,8 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 4;
-                Contents.String2 = Contents.Int1.ToString();
+                Package.Contents.Int1 += 4;
+                Package.Contents.String2 = Package.Contents.Int1.ToString();
 
                 return Station.Action.Next();
             }
@@ -63,8 +68,8 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 6;
-                Contents.String3 = Contents.Int1.ToString();
+                Package.Contents.Int1 += 6;
+                Package.Contents.String3 = Package.Contents.Int1.ToString();
 
                 return Station.Action.Next();
             }
@@ -74,8 +79,8 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 8;
-                Contents.String4 = Contents.Int1.ToString();
+                Package.Contents.Int1 += 8;
+                Package.Contents.String4 = Package.Contents.Int1.ToString();
 
                 return Station.Action.Next();
             }
@@ -94,6 +99,50 @@ namespace LightPath.Cargo.Tests.Integration.Stations
             public override Station.Action Process()
             {
                 return Station.Action.Next();
+            }
+        }
+
+        public class Station10 : Station<ContentModel5>
+        {
+            public override Station.Action Process()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public class Station11 : Station<ContentModel5>
+        {
+            public override Station.Action Process()
+            {
+                var message = "this is a test";
+
+                Assert.True(Package.Contents == Contents);
+                Assert.True(LastResult.WasFailure);
+                Assert.True(IsErrored);
+                Assert.True(PackageResults.Count == 1);
+
+                var result = PackageResults.First();
+
+                Assert.True(Package.Messages?.Any() ?? false);
+                Assert.True(Messages?.Any() ?? false);
+                Assert.True(result.WasFailure);
+                Assert.False(result.WasSuccess);
+                Assert.NotNull(result.ActionException);
+                Assert.True(result.ActionException is NotImplementedException);
+
+                Trace(message);
+
+                Assert.Equal(message, Messages.Last());
+
+                return Station.Action.Next("next");
+            }
+        }
+
+        public class Station12 : Station<ContentModel5>
+        {
+            public override Station.Action Process()
+            {
+                return Station.Action.Next("aborting");
             }
         }
     }

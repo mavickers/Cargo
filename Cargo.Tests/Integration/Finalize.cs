@@ -101,8 +101,7 @@ namespace LightPath.Cargo.Tests.Integration
 
             Assert.True(bus.Package.IsErrored);
             Assert.True(bus.Package.IsAborted);
-            Assert.True(bus.Package.Results.Last().Exception is System.Reflection.TargetInvocationException);
-            Assert.True(bus.Package.Results.Last().Exception.InnerException is System.NotImplementedException);
+            Assert.True(bus.Package.Results.Last().Exception is System.NotImplementedException);
         }
     }
 }

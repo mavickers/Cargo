@@ -29,4 +29,8 @@
     <ProjectReference Include="..\Cargo\Cargo.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
 </Project>

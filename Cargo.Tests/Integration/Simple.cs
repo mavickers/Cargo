@@ -1,11 +1,20 @@
 ﻿using LightPath.Cargo.Tests.Integration.Common;
+using System.Linq;
 using Xunit;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 using static LightPath.Cargo.Tests.Integration.Stations.Simple;
 
 namespace LightPath.Cargo.Tests.Integration
 {
     public class SimpleTests
     {
+        private readonly ITestOutputHelper _outputHelper;
+        public SimpleTests(ITestOutputHelper outputHelper)
+        {
+            _outputHelper = outputHelper;
+        }
+
         [Fact]
         public void Scenario1A()
         {
@@ -33,6 +42,11 @@ namespace LightPath.Cargo.Tests.Integration
 
             Assert.False(bus.Package.IsAborted);
             Assert.False(bus.Package.IsErrored);
+
+            // make sure the trace messages are being capture
+
+            Assert.EndsWith("begin trace", bus.Package.Messages.First());
+            Assert.EndsWith("end trace", bus.Package.Messages.Last());
         }
 
         [Fact]
@@ -134,6 +148,20 @@ namespace LightPath.Cargo.Tests.Integration
             
             busA.Go(content4);
             busB.Go(content5);
+        }
+
+        [Fact]
+        public void Scenario5()
+        {
+            var content = new ContentModel5();
+            var bus = Bus.New<ContentModel5>().WithStations(typeof(Station10), typeof(Station11), typeof(Station12)).WithNoAbortOnError();
+
+            bus.Go(content);
+
+            Assert.True(bus.Package.IsErrored);
+            Assert.True(bus.Package.LastStationResult.WasSuccess);
+            Assert.Contains(bus.Package.Results, result => result.ActionMessage == "next");
+            Assert.Equal("aborting", bus.Package.Results.Last().ActionMessage);
         }
     }
 }

@@ -44,7 +44,10 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 1;
+                Package.Contents.Int1 += 1;
+
+                Assert.True(TryGetService<Interface1>(out _));
+                Assert.False(TryGetService<string>(out _));
 
                 return Station.Action.Next();
             }
@@ -54,7 +57,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                Contents.Int1 += 2;
+                Package.Contents.Int1 += 2;
 
                 return Station.Action.Next();
             }
@@ -68,7 +71,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
 
                 if (service == null) throw new Exception("Could not locate service");
 
-                Contents.Int1 = service.AddThree(Contents.Int1);
+                Package.Contents.Int1 = service.AddThree(Package.Contents.Int1);
 
                 return Station.Action.Next();
             }
@@ -82,7 +85,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
 
                 if (service == null) throw new Exception("Could not locate service");
 
-                Contents.Int1 = service.AddOne(Contents.Int1);
+                Package.Contents.Int1 = service.AddOne(Package.Contents.Int1);
 
                 return Station.Action.Next();
             }
@@ -97,7 +100,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
                 Assert.True(result1);
                 Assert.NotNull(service);
 
-                Contents.Int1 = service.AddThree(Contents.Int1);
+                Package.Contents.Int1 = service.AddThree(Package.Contents.Int1);
 
                 var result2 = TryGetService<Exception>(out var exception);
 
@@ -117,7 +120,7 @@ namespace LightPath.Cargo.Tests.Integration.Stations
                 Assert.True(result1);
                 Assert.NotNull(service);
 
-                Contents.Int1 = service.AddSeven(Contents.Int1);
+                Package.Contents.Int1 = service.AddSeven(Package.Contents.Int1);
 
                 var result2 = TryGetService<Exception>(out var exception);
 
@@ -126,6 +129,27 @@ namespace LightPath.Cargo.Tests.Integration.Stations
 
                 return Station.Action.Next();
             }
+        }
+
+        public class Station5 : Station<ContentModel1>
+        {
+            public override Station.Action Process()
+            {
+                var success = TryGetService<Types>(out var type);
+
+                Assert.True(success);
+                Assert.Equal(Types.Third, type);
+
+                return Station.Action.Next();
+            }
+        }
+
+        public enum Types
+        {
+            None = 0,
+            First = 1,
+            Second = 2,
+            Third = 3
         }
     }
 }

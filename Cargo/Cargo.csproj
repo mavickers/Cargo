@@ -1,13 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net472;net48;net6.0;.net7.0;.net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>mavickers</Authors>
     <Owners>mavickers,lightpath</Owners>
     <Company>LightPath Solutions, LLC</Company>
     <Product>Cargo COR Library</Product>
-    <Copyright>2022 LightPath Solutions, LLC</Copyright>
+    <Copyright>2024 LightPath Solutions, LLC</Copyright>
     <PackageProjectUrl>https://github.com/mavickers/Cargo</PackageProjectUrl>
     <PackageId>LightPath.Cargo</PackageId>
     <Title>Cargo</Title>
@@ -21,13 +22,13 @@
     <PackageTags>COR</PackageTags>
     <Description>A lightweight chain of responsibility library for .Net.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Version>2.0.4.0</Version>
-    <AssemblyVersion>2.0.4.0</AssemblyVersion>
-    <FileVersion>2.0.4.0</FileVersion>
+    <Version>2.0.4.3</Version>
+    <AssemblyVersion>2.0.4.3</AssemblyVersion>
+    <FileVersion>2.0.4.3</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Extensions\" />
+    <Folder Include="Properties\" />
   </ItemGroup>
 
   <ItemGroup>

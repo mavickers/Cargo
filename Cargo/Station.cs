@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace LightPath.Cargo
 {
@@ -102,6 +101,8 @@ namespace LightPath.Cargo
 
         private Package<TContent> _package { get; set; }
 
+        protected Package<TContent> Package => _package;
+        [Obsolete("Use Package.Contents")]
         protected TContent Contents => _package.Contents;
         protected Station.Result LastResult => _package.Results.Last();
 
@@ -110,16 +111,19 @@ namespace LightPath.Cargo
 
         public TService GetService<TService>()
         {
-            if (!_package.Services.ContainsKey(typeof(TService))) return default;
+            if (!HasService<TService>()) return default;
+            if (_package == null) return default;
 
             return (TService)_package.Services[typeof(TService)];
         }
+
+        public bool HasService<TService>() => _package?.Services?.ContainsKey(typeof(TService)) ?? false;
 
         public IList<string> Messages => _package.Messages;
 
         public void Trace(string message) => _package.Trace(message);
 
-        public bool TryGetService<TService>(out TService output) where TService : class
+        public bool TryGetService<TService>(out TService output)
         {
             output = default;
 
@@ -127,7 +131,7 @@ namespace LightPath.Cargo
             {
                 output = GetService<TService>();
 
-                return output != default;
+                return output != null;
             }
             catch
             {
@@ -135,7 +139,6 @@ namespace LightPath.Cargo
             }
         }
 
-        public static Type Type => MethodBase.GetCurrentMethod()?.DeclaringType;
         public abstract Station.Action Process();
     }
 }
