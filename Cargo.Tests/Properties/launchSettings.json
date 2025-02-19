@@ -1,7 +1,0 @@
-{
-  "profiles": {
-    "Cargo.Tests": {
-      "commandName": "Project"
-    }
-  }
-}

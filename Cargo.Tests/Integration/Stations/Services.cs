@@ -130,5 +130,26 @@ namespace LightPath.Cargo.Tests.Integration.Stations
                 return Station.Action.Next();
             }
         }
+
+        public class Station5 : Station<ContentModel1>
+        {
+            public override Station.Action Process()
+            {
+                var success = TryGetService<Types>(out var type);
+
+                Assert.True(success);
+                Assert.Equal(Types.Third, type);
+
+                return Station.Action.Next();
+            }
+        }
+
+        public enum Types
+        {
+            None = 0,
+            First = 1,
+            Second = 2,
+            Third = 3
+        }
     }
 }

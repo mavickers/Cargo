@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using static LightPath.Cargo.Station.Output;
+using static LightPath.Cargo.Strategies;
 
 namespace LightPath.Cargo
 {
@@ -121,6 +123,13 @@ namespace LightPath.Cargo
         public Bus<TContent> WithNoAbortOnError() => this.SetAndReturn(nameof(_withAbortOnError), false);
         public Bus<TContent> WithFinalStation<TStation>() => this.SetAndReturn(nameof(_finalStation), typeof(TStation));
 
+        /// <summary>
+        /// Register a service with a declared type
+        /// </summary>
+        /// <typeparam name="TService"></typeparam>
+        /// <param name="service"></param>
+        /// <returns>Bus&lt;TContent&gt;</returns>
+        /// <exception cref="Exception"></exception>
         public Bus<TContent> WithService<TService>(TService service)
         {
             if (service != null && !_services.TryAdd(typeof(TService), service)) throw new Exception("Unable to update services dictionary");
@@ -128,6 +137,52 @@ namespace LightPath.Cargo
             return this;
         }
 
+        /// <summary>
+        /// Register a service using the actual type of the service
+        /// </summary>
+        /// <param name="service"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public Bus<TContent> WithService(object service)
+        {
+            if (service != null && !_services.TryAdd(service.GetType(), service)) throw new Exception("Unable to update services dictionary");
+
+            return this;
+        }
+
+        /// <summary>
+        /// Add multiple services to the bus
+        /// </summary>
+        /// <param name="strategy"></param>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        /// <remarks>
+        /// Enums will always be registered with their declared type!
+        /// </remarks>
+        public Bus<TContent> WithServices(ServiceRegistrationStrategy strategy, params object[] services)
+        {
+            if (services == null) return this;
+
+            foreach (var service in services)
+            {
+                var type = service.GetType();
+                var firstInterface = type.GetInterfaces().FirstOrDefault();
+
+                if (firstInterface == null || type.IsEnum || strategy == ServiceRegistrationStrategy.AsDeclaredType) WithService(service);
+                else if(!_services.TryAdd(firstInterface, service)) throw new Exception("Unable to update services dictionary");
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Add multiple services to the bus
+        /// </summary>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        [Obsolete("Use WithServices(ServiceRegistrationStrategy, params object[])")]
         public Bus<TContent> WithServices(params object[] services)
         {
             foreach (var service in services)
@@ -135,7 +190,7 @@ namespace LightPath.Cargo
                 var interfaces = service.GetType().GetInterfaces();
                 var declaredType = interfaces.Length == 1 ? interfaces[0] : service.GetType();
 
-                if (service != null && !_services.TryAdd(declaredType, service)) throw new Exception("Unable to update services dictionary");
+                if (!_services.TryAdd(declaredType, service)) throw new Exception("Unable to update services dictionary");
             }
 
             return this;
