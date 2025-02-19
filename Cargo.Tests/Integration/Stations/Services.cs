@@ -135,21 +135,45 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
             public override Station.Action Process()
             {
-                var success = TryGetService<Types>(out var type);
+                var numberedType = NumberedTypes.None;
+                var unNumberedType = UnNumberedTypes.None;
+                var success = HasService<NumberedTypes>() && TryGetService<NumberedTypes>(out numberedType);
 
                 Assert.True(success);
-                Assert.Equal(Types.Third, type);
+                Assert.Equal(NumberedTypes.Third, numberedType);
 
                 return Station.Action.Next();
             }
         }
 
-        public enum Types
+        public class Station6 : Station<ContentModel1>
+        {
+            public override Station.Action Process()
+            {
+                var unNumberedType = UnNumberedTypes.None;
+                var success = HasService<UnNumberedTypes>() && TryGetService<UnNumberedTypes>(out unNumberedType);
+
+                Assert.True(success);
+                Assert.Equal(UnNumberedTypes.First, unNumberedType);
+
+                return Station.Action.Next();
+            }
+        }
+
+        public enum NumberedTypes
         {
             None = 0,
             First = 1,
             Second = 2,
             Third = 3
+        }
+
+        public enum UnNumberedTypes
+        {
+            None,
+            First,
+            Second, 
+            Third
         }
     }
 }
