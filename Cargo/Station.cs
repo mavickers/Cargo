@@ -74,7 +74,7 @@ namespace LightPath.Cargo
             public Exception ActionException => _action.ActionException;
             public string ActionMessage => _action.ActionMessage;
             public Exception Exception => _exception;
-            public Type Station => _station?.GetType();
+            public Type Station => _station;
             public bool IsAborting => _action.ActionType == Action.ActionTypes.Abort;
             public bool IsRepeating => _action.ActionType == Action.ActionTypes.Repeat;
             public bool WasFailure => _output == Output.Failed;

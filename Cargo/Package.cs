@@ -19,10 +19,13 @@ namespace LightPath.Cargo
         private Guid _executionId { get; }
         private readonly TContent _contents;
 
+        public string AbortMessage => Results?.LastOrDefault(r => r.IsAborting)?.ActionMessage ?? "N/A";
         public TContent Contents => _contents;
         public Guid ExecutionId => _executionId;
         public bool IsAborted => Results?.Any(r => r.IsAborting) ?? false;
-        public bool IsErrored => Results?.Any(r => r.WasFailure) ?? false;
+        public bool IsErrored => LastStationFailure != null;
+        public Exception LastStationException => LastStationFailure?.Exception ?? LastStationFailure?.ActionException ?? new Exception("N/A");
+        private Station.Result LastStationFailure => Results?.LastOrDefault(r => r.WasFailure || r.Exception != null || r.ActionException != null);
         public Station.Result LastStationResult => Results?.LastOrDefault();
         public ConcurrentQueue<Station.Result> Results { get; }
         internal readonly ConcurrentDictionary<Type, object> Services;
