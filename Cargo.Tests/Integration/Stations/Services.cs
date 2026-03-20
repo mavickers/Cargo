@@ -136,7 +136,6 @@ namespace LightPath.Cargo.Tests.Integration.Stations
             public override Station.Action Process()
             {
                 var numberedType = NumberedTypes.None;
-                var unNumberedType = UnNumberedTypes.None;
                 var success = HasService<NumberedTypes>() && TryGetService<NumberedTypes>(out numberedType);
 
                 Assert.True(success);
