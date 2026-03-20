@@ -3,8 +3,6 @@ using System.Linq;
 using LightPath.Cargo.Tests.Integration.Common;
 using Xunit;
 
-#pragma warning disable CS0618 // Type or member is obsolete
-
 namespace LightPath.Cargo.Tests.Integration.Stations
 {
     public class Simple
@@ -116,7 +114,6 @@ namespace LightPath.Cargo.Tests.Integration.Stations
             {
                 var message = "this is a test";
 
-                Assert.True(Package.Contents == Contents);
                 Assert.True(LastResult.WasFailure);
                 Assert.True(IsErrored);
                 Assert.True(PackageResults.Count == 1);

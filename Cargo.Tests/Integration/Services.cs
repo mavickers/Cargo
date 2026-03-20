@@ -34,7 +34,7 @@ namespace LightPath.Cargo.Tests.Integration
             var implementation2 = new Implementation2();
             var implementation3 = new Implementation3();
             var bus1 = Bus.New<ContentModel1>()
-                          .WithServices(implementation1, implementation2, implementation3, NumberedTypes.Third)
+                          .WithServices(Strategies.ServiceRegistrationStrategy.AsFirstInterfacePreferred, implementation1, implementation2, implementation3, NumberedTypes.Third)
                           .WithStation<Station1>()
                           .WithStation<Station2>()
                           .WithStation<Station2>()

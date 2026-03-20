@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -40,8 +40,8 @@ namespace LightPath.Cargo
             public static Action Next(Exception nextException) => Next().WithException(nextException);
             public static Action Next(string nextMessage) => Next().WithMessage(nextMessage);
             public static Action Repeat() => new Action(ActionTypes.Repeat);
-            public static Action Repeat(Exception repeatException) => Next().WithException(repeatException);
-            public static Action Repeat(string repeatMessage) => Next().WithMessage(repeatMessage);
+            public static Action Repeat(Exception repeatException) => Repeat().WithException(repeatException);
+            public static Action Repeat(string repeatMessage) => Repeat().WithMessage(repeatMessage);
 
             public Action WithException(Exception exception)
             {
@@ -95,50 +95,8 @@ namespace LightPath.Cargo
         }
     }
 
-    public abstract class Station<TContent> where TContent : class
+    public abstract class Station<TContent> : StationBase<TContent> where TContent : class
     {
-        // package value will be injected by the bus when it runs
-
-        private Package<TContent> _package { get; set; }
-
-        protected Package<TContent> Package => _package;
-        [Obsolete("Use Package.Contents")]
-        protected TContent Contents => _package.Contents;
-        protected Station.Result LastResult => _package.Results.Last();
-
-        public bool IsErrored => _package.IsErrored;
-        public IList<Station.Result> PackageResults => _package.Results.ToList().AsReadOnly();
-
-        public TService GetService<TService>()
-        {
-            if (!HasService<TService>()) return default;
-            if (_package == null) return default;
-
-            return (TService)_package.Services[typeof(TService)];
-        }
-
-        public bool HasService<TService>() => _package?.Services?.ContainsKey(typeof(TService)) ?? false;
-
-        public IList<string> Messages => _package.Messages;
-
-        public void Trace(string message) => _package.Trace(message);
-
-        public bool TryGetService<TService>(out TService output)
-        {
-            output = default;
-
-            try
-            {
-                output = GetService<TService>();
-
-                return output != null;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         public abstract Station.Action Process();
     }
 }
