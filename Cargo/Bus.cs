@@ -38,8 +38,7 @@ namespace LightPath.Cargo
 
             foreach (var stationType in allStations)
             {
-                if (IsAsyncStationType(stationType))
-                    throw new InvalidOperationException($"Station '{stationType.FullName}' is async. Use GoAsync() instead of Go().");
+                if (IsAsyncStationType(stationType)) throw new InvalidOperationException($"Station '{stationType.FullName}' is async. Use GoAsync() instead of Go().");
             }
 
             return GoAsync(content, CancellationToken.None, callback).GetAwaiter().GetResult();
@@ -113,10 +112,8 @@ namespace LightPath.Cargo
                 catch (Exception exception)
                 {
                     var actualException = exception;
-                    if (actualException is TargetInvocationException tie && tie.InnerException != null)
-                        actualException = tie.InnerException;
-                    if (actualException is AggregateException ae && ae.InnerExceptions.Count == 1)
-                        actualException = ae.InnerExceptions[0];
+                    if (actualException is TargetInvocationException tie && tie.InnerException != null) actualException = tie.InnerException;
+                    if (actualException is AggregateException ae && ae.InnerExceptions.Count == 1) actualException = ae.InnerExceptions[0];
 
                     var action = _withAbortOnError ? Station.Action.Abort(actualException) : Station.Action.Next(actualException);
                     var result = Station.Result.New(stationType, action, Failed, actualException);
