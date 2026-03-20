@@ -6,6 +6,7 @@ Cargo is a lightweight Chain of Responsibility pipeline library for .NET.
 - `dotnet test Cargo.sln`
 - `publish.bat -local [version]` — publish to local NuGet feed (`d:\Local Packages`)
 - `publish.bat -nuget [version]` — publish to nuget.org
+- NuGet package: https://www.nuget.org/packages/LightPath.Cargo
 
 ## Project Layout
 
@@ -15,7 +16,9 @@ Cargo is a lightweight Chain of Responsibility pipeline library for .NET.
 
 ## Architecture Notes
 
-- Pipeline is entirely synchronous — no async/await.
+- Pipeline supports both synchronous (`Go()`) and asynchronous (`GoAsync()`) execution.
+- `Go()` throws `InvalidOperationException` if the pipeline contains async stations.
+- Stations inherit from `Station<T>` (sync) or `StationAsync<T>` (async), both sharing `StationBase<T>`.
 
 ## Test Organization
 
