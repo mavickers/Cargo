@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace LightPath.Cargo
 {
@@ -20,6 +21,7 @@ namespace LightPath.Cargo
         private readonly TContent _contents;
 
         public string AbortMessage => Results?.LastOrDefault(r => r.IsAborting)?.ActionMessage ?? "N/A";
+        public CancellationToken CancellationToken { get; internal set; }
         public TContent Contents => _contents;
         public Guid ExecutionId => _executionId;
         public bool IsAborted => Results?.Any(r => r.IsAborting) ?? false;

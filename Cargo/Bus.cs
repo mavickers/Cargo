@@ -1,7 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using static LightPath.Cargo.Station.Output;
 using static LightPath.Cargo.Strategies;
 
@@ -12,17 +14,6 @@ namespace LightPath.Cargo
         public static Bus<TContent> New<TContent>() where TContent : class
         {
             return Bus<TContent>.New();
-        }
-
-        internal static Bus<TContent> SetAndReturn<TContent>(this Bus<TContent> bus, string propertyName, object value) where TContent : class
-        {
-            var property = typeof(Bus<TContent>).GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (property == null) throw new Exception($"Cound not find property named '{propertyName}'");
-
-            property.SetValue(bus, value);
-
-            return bus;
         }
     }
 
@@ -43,29 +34,54 @@ namespace LightPath.Cargo
         {
             if (content == null) throw new ArgumentException("\"content\" parameter is null");
 
+            var allStations = _stations.Append(_finalStation).Where(s => s != null);
+
+            foreach (var stationType in allStations)
+            {
+                if (IsAsyncStationType(stationType)) throw new InvalidOperationException($"Station '{stationType.FullName}' is async. Use GoAsync() instead of Go().");
+            }
+
+            return GoAsync(content, CancellationToken.None, callback).GetAwaiter().GetResult();
+        }
+
+        public async Task<TContent> GoAsync
+        (
+            TContent content,
+            CancellationToken cancellationToken = default,
+            Func<TContent, TContent> callback = null
+        )
+        {
+            if (content == null) throw new ArgumentException("\"content\" parameter is null");
+
             var currentStationIndex = 0;
-            var processMethod = typeof(Station<TContent>).GetMethod("Process", BindingFlags.Public | BindingFlags.Instance);
+            var syncProcessMethod = typeof(Station<TContent>).GetMethod("Process", BindingFlags.Public | BindingFlags.Instance);
+            var asyncProcessMethod = typeof(StationAsync<TContent>).GetMethod("ProcessAsync", BindingFlags.Public | BindingFlags.Instance);
+            var packageProperty = typeof(StationBase<TContent>).GetProperty("_package", BindingFlags.NonPublic | BindingFlags.Instance);
             var stationList = _stations.Append(_finalStation).Where(s => s != null).ToList();
             var hasFinalStation = _finalStation != null;
             var iteration = 1;
-            
-            if (processMethod == null) throw new Exception("Bus.Go failed - unable to access processmethod");
+
+            if (syncProcessMethod == null) throw new Exception("Bus.GoAsync failed - unable to access sync Process method");
+            if (asyncProcessMethod == null) throw new Exception("Bus.GoAsync failed - unable to access async ProcessAsync method");
+            if (packageProperty == null) throw new Exception("Unable to access package property");
 
             _package = Cargo.Package.New<TContent>(content, _services);
+            _package.CancellationToken = cancellationToken;
             _package.Trace($"{typeof(TContent).FullName} begin trace");
 
             callback = callback ?? (arg => arg);
 
             while (currentStationIndex < stationList.Count)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 var stationType = stationList[currentStationIndex];
                 var isLastStation = stationList[currentStationIndex] == stationList.Last();
+                var isAsync = IsAsyncStationType(stationType);
                 var currentStation = Activator.CreateInstance(stationList[currentStationIndex]);
-                var packageProperty = typeof(Station<TContent>).GetProperty("_package", BindingFlags.NonPublic | BindingFlags.Instance);
                 var stationPrefix = $"{stationList[currentStationIndex].FullName}";
 
                 if (currentStation == null) throw new Exception($"Unable to instantiate {stationList[currentStationIndex].FullName}");
-                if (packageProperty == null) throw new Exception("Unable to access package property");
 
                 packageProperty.SetValue(currentStation, _package);
 
@@ -76,7 +92,18 @@ namespace LightPath.Cargo
                     _package.Trace();
                     _package.Trace($"{stationPrefix} begin");
 
-                    var action = (Station.Action)processMethod.Invoke(currentStation, null);
+                    Station.Action action;
+
+                    if (isAsync)
+                    {
+                        var task = (Task<Station.Action>)asyncProcessMethod.Invoke(currentStation, null);
+                        action = await task.ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        action = (Station.Action)syncProcessMethod.Invoke(currentStation, null);
+                    }
+
                     var result = Station.Result.New(stationType, action, Succeeded);
 
                     _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
@@ -84,7 +111,10 @@ namespace LightPath.Cargo
                 }
                 catch (Exception exception)
                 {
-                    var actualException = exception is TargetInvocationException && exception.InnerException != null ? exception.InnerException : exception;
+                    var actualException = exception;
+                    if (actualException is TargetInvocationException tie && tie.InnerException != null) actualException = tie.InnerException;
+                    if (actualException is AggregateException ae && ae.InnerExceptions.Count == 1) actualException = ae.InnerExceptions[0];
+
                     var action = _withAbortOnError ? Station.Action.Abort(actualException) : Station.Action.Next(actualException);
                     var result = Station.Result.New(stationType, action, Failed, actualException);
 
@@ -113,22 +143,34 @@ namespace LightPath.Cargo
             return callback(content);
         }
 
+        // TODO: consider splitting Bus if perf is a concern
+
         public static Bus<TContent> New()
         {
             return new Bus<TContent>();
         }
 
-        public Bus<TContent> WithAbortOnError() => this.SetAndReturn(nameof(_withAbortOnError), true);
-        public Bus<TContent> WithNoAbortOnError() => this.SetAndReturn(nameof(_withAbortOnError), false);
-        public Bus<TContent> WithFinalStation<TStation>() => this.SetAndReturn(nameof(_finalStation), typeof(TStation));
+        public Bus<TContent> WithAbortOnError()
+        {
+            _withAbortOnError = true;
+            return this;
+        }
+
+        public Bus<TContent> WithNoAbortOnError()
+        {
+            _withAbortOnError = false;
+            return this;
+        }
+
+        public Bus<TContent> WithFinalStation<TStation>()
+        {
+            _finalStation = typeof(TStation);
+            return this;
+        }
 
         /// <summary>
         /// Register a service with a declared type
         /// </summary>
-        /// <typeparam name="TService"></typeparam>
-        /// <param name="service"></param>
-        /// <returns>Bus&lt;TContent&gt;</returns>
-        /// <exception cref="Exception"></exception>
         public Bus<TContent> WithService<TService>(TService service)
         {
             if (service != null && !_services.TryAdd(typeof(TService), service)) throw new Exception("Unable to update services dictionary");
@@ -139,9 +181,6 @@ namespace LightPath.Cargo
         /// <summary>
         /// Register a service using the actual type of the service
         /// </summary>
-        /// <param name="service"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
         public Bus<TContent> WithService(object service)
         {
             if (service != null && !_services.TryAdd(service.GetType(), service)) throw new Exception("Unable to update services dictionary");
@@ -152,13 +191,6 @@ namespace LightPath.Cargo
         /// <summary>
         /// Add multiple services to the bus
         /// </summary>
-        /// <param name="strategy"></param>
-        /// <param name="services"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        /// <remarks>
-        /// Enums will always be registered with their declared type!
-        /// </remarks>
         public Bus<TContent> WithServices(ServiceRegistrationStrategy strategy, params object[] services)
         {
             if (services == null) return this;
@@ -175,29 +207,9 @@ namespace LightPath.Cargo
             return this;
         }
 
-        /// <summary>
-        /// Add multiple services to the bus
-        /// </summary>
-        /// <param name="services"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        [Obsolete("Use WithServices(ServiceRegistrationStrategy, params object[])")]
-        public Bus<TContent> WithServices(params object[] services)
-        {
-            foreach (var service in services)
-            {
-                var interfaces = service.GetType().GetInterfaces();
-                var declaredType = interfaces.Length == 1 ? interfaces[0] : service.GetType();
-
-                if (!_services.TryAdd(declaredType, service)) throw new Exception("Unable to update services dictionary");
-            }
-
-            return this;
-        }
-
         public Bus<TContent> WithStation<TStation>()
         {
-            _stations.Enqueue(typeof(TStation));
+            WithStation(typeof(TStation));
 
             return this;
         }
@@ -209,15 +221,59 @@ namespace LightPath.Cargo
 
             foreach (var stationType in stationTypes)
             {
-                if (!stationType.BaseType?.FullName?.StartsWith("LightPath.Cargo.Station") ?? true) continue;
-
-                _stations.Enqueue(stationType);
+                WithStation(stationType, throwOnInvalid: false);
             }
 
             return this;
         }
 
-        public Bus<TContent> WithStationRepeatLimit(int limit) => this.SetAndReturn(nameof(_stationRepeatLimit), limit);
+        public Bus<TContent> WithStationRepeatLimit(int limit)
+        {
+            _stationRepeatLimit = limit;
+            return this;
+        }
 
+        private void WithStation(Type stationType, bool throwOnInvalid = true)
+        {
+            if (!IsValidStationType(stationType))
+            {
+                if (throwOnInvalid) throw new ArgumentException($"Type '{stationType.FullName}' does not inherit from Station<{typeof(TContent).Name}> or StationAsync<{typeof(TContent).Name}>");
+                return;
+            }
+
+            _stations.Enqueue(stationType);
+        }
+
+        private static bool IsValidStationType(Type stationType)
+        {
+            var current = stationType;
+
+            while (current != null && current != typeof(object))
+            {
+                if (current.IsGenericType)
+                {
+                    var genericDef = current.GetGenericTypeDefinition();
+                    if (genericDef == typeof(Station<>) || genericDef == typeof(StationAsync<>)) return true;
+                }
+
+                current = current.BaseType;
+            }
+
+            return false;
+        }
+
+        private static bool IsAsyncStationType(Type stationType)
+        {
+            var current = stationType;
+
+            while (current != null && current != typeof(object))
+            {
+                if (current.IsGenericType && current.GetGenericTypeDefinition() == typeof(StationAsync<>)) return true;
+
+                current = current.BaseType;
+            }
+
+            return false;
+        }
     }
 }
