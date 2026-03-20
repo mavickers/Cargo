@@ -15,6 +15,7 @@
     <AssemblyName>LightPath.Cargo</AssemblyName>
     <RootNamespace>LightPath.Cargo</RootNamespace>
     <PackageLicenseFile>license.md</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />
     <RepositoryUrl>https://github.com/mavickers/Cargo</RepositoryUrl>
@@ -34,6 +35,10 @@
       <PackagePath></PackagePath>
     </None>
     <None Include="license.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="..\README.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
