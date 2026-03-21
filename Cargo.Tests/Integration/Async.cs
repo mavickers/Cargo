@@ -197,27 +197,20 @@ namespace LightPath.Cargo.Tests.Integration
         }
 
         /// <summary>
-        /// 10b. Cancellation after first station runs
+        /// 10b. Cancellation after first station runs — station cancels token mid-pipeline
         /// </summary>
         [Fact]
         public async Task CancellationAfterFirstStation()
         {
             var content = new ContentModel2();
             var cts = new CancellationTokenSource();
-
-            // We'll use a station that triggers cancellation mid-pipeline via the token on the package
             var bus = Bus.New<ContentModel2>()
-                         .WithStation<SyncAdder1>()
+                         .WithService(cts)
+                         .WithStation<SyncAdderThenCancel>()
                          .WithStation<AsyncAdder>();
 
-            // Run with a token that we cancel after a brief delay
-            // Since SyncAdder1 is synchronous and fast, we need a different approach:
-            // Cancel between iterations by using a custom station
-            cts.CancelAfter(1);
-            await Task.Delay(50);
-
             await Assert.ThrowsAsync<OperationCanceledException>(() => bus.GoAsync(content, cts.Token));
-            Assert.Equal(0, content.IntVal);
+            Assert.Equal(1, content.IntVal);
         }
 
         /// <summary>
@@ -287,6 +280,153 @@ namespace LightPath.Cargo.Tests.Integration
             Assert.True(bus.Package.IsErrored);
             Assert.True(bus.Package.IsAborted);
             Assert.True(bus.Package.Results.Last(r => r.Exception != null).Exception is OverflowException);
+        }
+
+        /// <summary>
+        /// 15. Async station cancels token mid-pipeline
+        /// </summary>
+        [Fact]
+        public async Task AsyncStationCancelsMidPipeline()
+        {
+            var content = new ContentModel2();
+            var cts = new CancellationTokenSource();
+            var bus = Bus.New<ContentModel2>()
+                         .WithService(cts)
+                         .WithStation<AsyncAdderThenCancel>()
+                         .WithStation<SyncAdder3>();
+
+            await Assert.ThrowsAsync<OperationCanceledException>(() => bus.GoAsync(content, cts.Token));
+            Assert.Equal(2, content.IntVal);
+        }
+
+        /// <summary>
+        /// 16. Cancellation skips final station (unlike abort which runs it)
+        /// </summary>
+        [Fact]
+        public async Task CancellationSkipsFinalStation()
+        {
+            var content = new ContentModel2();
+            var cts = new CancellationTokenSource();
+            var bus = Bus.New<ContentModel2>()
+                         .WithService(cts)
+                         .WithStation<SyncAdderThenCancel>()
+                         .WithStation<SyncAdder3>()
+                         .WithFinalStation<SyncFinalStation>();
+
+            await Assert.ThrowsAsync<OperationCanceledException>(() => bus.GoAsync(content, cts.Token));
+            Assert.Equal(1, content.IntVal);
+        }
+
+        /// <summary>
+        /// 17. Cancellation propagates even with NoAbortOnError
+        /// </summary>
+        [Fact]
+        public async Task CancellationPropagatesWithNoAbortOnError()
+        {
+            var content = new ContentModel2();
+            var cts = new CancellationTokenSource();
+            var bus = Bus.New<ContentModel2>()
+                         .WithService(cts)
+                         .WithStation<SyncAdderThenCancel>()
+                         .WithStation<AsyncAdder>()
+                         .WithNoAbortOnError();
+
+            await Assert.ThrowsAsync<OperationCanceledException>(() => bus.GoAsync(content, cts.Token));
+            Assert.Equal(1, content.IntVal);
+        }
+
+        /// <summary>
+        /// 18. Cooperative cancellation within an async station via Package.CancellationToken
+        /// </summary>
+        [Fact]
+        public async Task CooperativeCancellationWithinAsyncStation()
+        {
+            var content = new ContentModel2();
+            var cts = new CancellationTokenSource(50);
+            var bus = Bus.New<ContentModel2>()
+                         .WithStation<AsyncCooperativeCanceller>();
+
+            await Assert.ThrowsAsync<OperationCanceledException>(() => bus.GoAsync(content, cts.Token));
+            Assert.Equal(1, content.IntVal);
+        }
+
+        /// <summary>
+        /// 19. AbortOnCancel between stations — station cancels token, next loop iteration aborts gracefully
+        /// </summary>
+        [Fact]
+        public async Task AbortOnCancelBetweenStations()
+        {
+            var content = new ContentModel2();
+            var cts = new CancellationTokenSource();
+            var bus = Bus.New<ContentModel2>()
+                         .WithService(cts)
+                         .WithAbortOnCancel()
+                         .WithStation<SyncAdderThenCancel>()
+                         .WithStation<AsyncAdder>();
+
+            await bus.GoAsync(content, cts.Token);
+
+            Assert.True(bus.Package.IsAborted);
+            Assert.Equal(1, content.IntVal);
+        }
+
+        /// <summary>
+        /// 20. AbortOnCancel within async station — cooperative cancellation aborts gracefully
+        /// </summary>
+        [Fact]
+        public async Task AbortOnCancelWithinAsyncStation()
+        {
+            var content = new ContentModel2();
+            var cts = new CancellationTokenSource(50);
+            var bus = Bus.New<ContentModel2>()
+                         .WithAbortOnCancel()
+                         .WithStation<AsyncCooperativeCanceller>();
+
+            await bus.GoAsync(content, cts.Token);
+
+            Assert.True(bus.Package.IsAborted);
+            Assert.Equal(1, content.IntVal);
+        }
+
+        /// <summary>
+        /// 21. AbortOnCancel with final station — final station runs on cancellation
+        /// </summary>
+        [Fact]
+        public async Task AbortOnCancelWithFinalStation()
+        {
+            var content = new ContentModel2();
+            var cts = new CancellationTokenSource();
+            var bus = Bus.New<ContentModel2>()
+                         .WithService(cts)
+                         .WithAbortOnCancel()
+                         .WithStation<SyncAdderThenCancel>()
+                         .WithStation<SyncAdder3>()
+                         .WithFinalStation<SyncFinalStation>();
+
+            await bus.GoAsync(content, cts.Token);
+
+            Assert.True(bus.Package.IsAborted);
+            Assert.Equal(101, content.IntVal);
+        }
+
+        /// <summary>
+        /// 22. AbortOnCancel cooperative cancellation with final station — async station cancels, final station runs
+        /// </summary>
+        [Fact]
+        public async Task AbortOnCancelCooperativeWithFinalStation()
+        {
+            var content = new ContentModel2();
+            var cts = new CancellationTokenSource(50);
+            var bus = Bus.New<ContentModel2>()
+                         .WithAbortOnCancel()
+                         .WithStation<AsyncCooperativeCanceller>()
+                         .WithStation<SyncAdder3>()
+                         .WithFinalStation<SyncFinalStation>();
+
+            await bus.GoAsync(content, cts.Token);
+
+            Assert.True(bus.Package.IsAborted);
+            Assert.Equal(101, content.IntVal);
         }
     }
 }

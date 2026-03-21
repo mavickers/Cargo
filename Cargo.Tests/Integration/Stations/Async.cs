@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using LightPath.Cargo.Tests.Integration.Common;
 using Xunit;
@@ -195,6 +196,43 @@ namespace LightPath.Cargo.Tests.Integration.Stations
             public override Station.Action Process()
             {
                 Package.Contents.IntVal += 1;
+                return Station.Action.Next();
+            }
+        }
+
+        public class SyncAdderThenCancel : Station<ContentModel2>
+        {
+            public override Station.Action Process()
+            {
+                Package.Contents.IntVal += 1;
+                var cts = GetService<CancellationTokenSource>();
+                cts.Cancel();
+
+                return Station.Action.Next();
+            }
+        }
+
+        public class AsyncAdderThenCancel : StationAsync<ContentModel2>
+        {
+            public override async Task<Station.Action> ProcessAsync()
+            {
+                await Task.CompletedTask;
+                Package.Contents.IntVal += 2;
+                var cts = GetService<CancellationTokenSource>();
+                cts.Cancel();
+
+                return Station.Action.Next();
+            }
+        }
+
+        public class AsyncCooperativeCanceller : StationAsync<ContentModel2>
+        {
+            public override async Task<Station.Action> ProcessAsync()
+            {
+                Package.Contents.IntVal += 1;
+                await Task.Delay(200, Package.CancellationToken);
+                Package.Contents.IntVal += 100;
+
                 return Station.Action.Next();
             }
         }
