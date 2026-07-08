@@ -45,12 +45,18 @@ jobs:
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 
-      - name: Tag published version
+      - name: Tag and create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ steps.nbgv.outputs.SimpleVersion }}"
-          if git rev-parse "refs/tags/$VERSION" >/dev/null 2>&1; then
-            echo "Tag $VERSION already exists; skipping."
+          if gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists; skipping."
           else
-            git tag "$VERSION"
-            git push origin "$VERSION"
+            gh release create "$VERSION" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "$VERSION" \
+              --generate-notes \
+              --latest
           fi
