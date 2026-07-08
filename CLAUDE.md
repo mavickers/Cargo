@@ -23,9 +23,9 @@ Cargo is a lightweight Chain of Responsibility pipeline library for .NET.
 
 ## Releasing
 
-- Versioning is managed by Nerdbank.GitVersioning (`version.json`). Only bump major/minor manually; patch auto-increments from commit count.
-- After a PR is merged, ask the user if they want to tag a release.
-- To release: build to get the Nerdbank version (`dotnet build Cargo/Cargo.csproj --configuration Release`, check the `.nupkg` filename), tag with that version, and push the tag. The GitHub Action handles the NuGet publish.
+- Versioning is managed by Nerdbank.GitVersioning (`version.json`). Only bump major/minor manually (edit `version.json`'s `version` field); patch auto-increments from commit height. Off-master builds carry a `-g<sha>` prerelease suffix; master builds (per `publicReleaseRefSpec`) are clean.
+- **Publishing is fully automated.** Every merge to `master` triggers `.github/workflows/publish.yml`, which builds, tests (net8.0), packs, pushes to nuget.org (`--skip-duplicate`), then tags the commit with the published version and pushes the tag. Master is fed only by release-worthy PR merges — so merging a PR is the release.
+- No manual tagging or `publish.bat` needed. To cut a release: merge the PR to master. To do a major/minor bump, land a `version.json` edit in that PR.
 
 ## Test Organization
 
