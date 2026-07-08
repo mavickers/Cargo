@@ -428,5 +428,31 @@ namespace LightPath.Cargo.Tests.Integration
             Assert.True(bus.Package.IsAborted);
             Assert.Equal(101, content.IntVal);
         }
+
+        /// <summary>
+        /// 23. Last-station detection is by index, not station type (regression).
+        /// The final station's type also appears as the first station; a type-based
+        /// "is last station" check would flag the first station as last, skip the
+        /// cancellation handling there, run it, and never record the abort.
+        /// </summary>
+        [Fact]
+        public async Task AbortOnCancelDetectsLastStationByIndexNotType()
+        {
+            var content = new ContentModel2();
+            var cts = new CancellationTokenSource();
+            var bus = Bus.New<ContentModel2>()
+                         .WithAbortOnCancel()
+                         .WithStation<SyncAdder3>()          // same type as the final station
+                         .WithFinalStation<SyncAdder3>();
+
+            cts.Cancel();
+
+            await bus.GoAsync(content, cts.Token);
+
+            // Only the final station runs; the abort is recorded before the first station.
+            // The old type-based check ran both stations (IntVal 6) and recorded no abort.
+            Assert.True(bus.Package.IsAborted);
+            Assert.Equal(3, content.IntVal);
+        }
     }
 }

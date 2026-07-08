@@ -93,7 +93,7 @@ var result = Bus.New<OrderContext>()
 - **Cancellation** — pass a `CancellationToken` to `GoAsync()`, accessible via `Package.CancellationToken`. Optionally treat cancellation as a graceful abort instead of an exception.
 - **Tracing** — built-in trace messages for pipeline execution
 - **Result tracking** — inspect results from each station via `Package.Results`
-- **Multi-target** — supports net472, net48, net6.0, net7.0, net8.0
+- **Broad compatibility** — targets `netstandard2.0` (runs on .NET Framework 4.6.1+, .NET Core 2.0+, and .NET 5/6/7/8+)
 
 ## Core Concepts
 
@@ -221,13 +221,15 @@ Cancellation is checked between stations. By default, a cancelled token throws `
 To treat cancellation as a graceful abort instead (record an abort result, run the final station, return normally):
 
 ```csharp
-var result = await Bus.New<OrderContext>()
+var bus = Bus.New<OrderContext>()
     .WithAbortOnCancel()
     .WithStation<SlowStation>()
-    .WithFinalStation<CleanupStation>()
-    .GoAsync(context, cts.Token);
+    .WithFinalStation<CleanupStation>();
 
-// No exception thrown — check bus.Package.IsAborted instead
+await bus.GoAsync(context, cts.Token);
+
+// No exception thrown — inspect the package state instead:
+if (bus.Package.IsAborted) { /* handle the graceful cancellation */ }
 ```
 
 ### Abort with Messages
@@ -292,13 +294,11 @@ bus.Package.IsAborted    // true
 
 ## Target Frameworks
 
-- .NET Framework 4.7.2
-- .NET Framework 4.8
-- .NET 6.0
-- .NET 7.0
-- .NET 8.0
+The library targets `netstandard2.0`, so it runs on any compatible runtime, including:
 
-*Last updated: 2026-03-21*
+- .NET Framework 4.6.1+
+- .NET Core 2.0+
+- .NET 5, 6, 7, 8 and later
 
 ## License
 
