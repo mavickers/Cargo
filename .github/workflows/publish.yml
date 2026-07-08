@@ -2,9 +2,12 @@ name: Publish to NuGet
 
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - master
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   publish:
@@ -22,6 +25,10 @@ jobs:
             7.0.x
             8.0.x
 
+      - name: Compute version (Nerdbank.GitVersioning)
+        id: nbgv
+        uses: dotnet/nbgv@master
+
       - name: Build
         run: dotnet build Cargo.sln --configuration Release
 
@@ -32,4 +39,18 @@ jobs:
         run: dotnet pack Cargo/Cargo.csproj --configuration Release --no-build --output ./nupkg
 
       - name: Push to NuGet
-        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: >
+          dotnet nuget push ./nupkg/*.nupkg
+          --api-key ${{ secrets.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
+
+      - name: Tag published version
+        run: |
+          VERSION="${{ steps.nbgv.outputs.SimpleVersion }}"
+          if git rev-parse "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists; skipping."
+          else
+            git tag "$VERSION"
+            git push origin "$VERSION"
+          fi
