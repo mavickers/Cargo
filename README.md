@@ -228,8 +228,8 @@ var bus = Bus.New<OrderContext>()
 
 await bus.GoAsync(context, cts.Token);
 
-// No exception thrown — check the package state instead:
-bus.Package.IsAborted // true
+// No exception thrown — inspect the package state instead:
+if (bus.Package.IsAborted) { /* handle the graceful cancellation */ }
 ```
 
 ### Abort with Messages
