@@ -9,6 +9,12 @@ on:
 permissions:
   contents: write
 
+# Serialize publish runs so concurrent releases can't race on the nuget push,
+# tag, or GitHub Release creation.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -27,7 +33,7 @@ jobs:
 
       - name: Compute version (Nerdbank.GitVersioning)
         id: nbgv
-        uses: dotnet/nbgv@master
+        uses: dotnet/nbgv@705dad19ab067f12f4e9eeaa60812e01edef5d25 # v0.5.2
 
       - name: Build
         run: dotnet build Cargo.sln --configuration Release

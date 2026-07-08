@@ -75,7 +75,7 @@ namespace LightPath.Cargo
             while (currentStationIndex < stationList.Count)
             {
                 var stationType = stationList[currentStationIndex];
-                var isLastStation = stationList[currentStationIndex] == stationList.Last();
+                var isLastStation = currentStationIndex == stationList.Count - 1;
 
                 if (cancellationToken.IsCancellationRequested && !(_withAbortOnCancel && isLastStation && hasFinalStation))
                 {
