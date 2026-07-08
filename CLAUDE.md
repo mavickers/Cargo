@@ -12,7 +12,8 @@ Cargo is a lightweight Chain of Responsibility pipeline library for .NET.
 
 - `Cargo/` — Main library (namespace: `LightPath.Cargo`, assembly: `LightPath.Cargo`)
 - `Cargo.Tests/` — Test project (xUnit, FluentAssertions, Moq, coverlet)
-- Both projects multi-target: net472, net48, net6.0, net7.0, net8.0
+- `Cargo/` targets netstandard2.0 (single target — broad reach: .NET Framework 4.6.1+, .NET 6/7/8+)
+- `Cargo.Tests/` multi-targets runnable frameworks: net472, net48, net6.0, net7.0, net8.0
 
 ## Architecture Notes
 
