@@ -90,7 +90,7 @@ var result = Bus.New<OrderContext>()
 - **Error handling** — abort on error (default) or continue with error state
 - **Station repeat** — stations can repeat themselves until a condition is met
 - **Final station** — a station that always runs, even after an abort
-- **Cancellation** — pass a `CancellationToken` to `GoAsync()`, accessible via `Package.CancellationToken`
+- **Cancellation** — pass a `CancellationToken` to `GoAsync()`, accessible via `Package.CancellationToken`. Optionally treat cancellation as a graceful abort instead of an exception.
 - **Tracing** — built-in trace messages for pipeline execution
 - **Result tracking** — inspect results from each station via `Package.Results`
 - **Multi-target** — supports net472, net48, net6.0, net7.0, net8.0
@@ -216,7 +216,19 @@ var result = await Bus.New<OrderContext>()
 // Package.CancellationToken
 ```
 
-Cancellation is checked between stations. If the token is cancelled, the pipeline throws `OperationCanceledException` and skips all remaining stations, including the final station.
+Cancellation is checked between stations. By default, a cancelled token throws `OperationCanceledException` and skips all remaining stations, including the final station.
+
+To treat cancellation as a graceful abort instead (record an abort result, run the final station, return normally):
+
+```csharp
+var result = await Bus.New<OrderContext>()
+    .WithAbortOnCancel()
+    .WithStation<SlowStation>()
+    .WithFinalStation<CleanupStation>()
+    .GoAsync(context, cts.Token);
+
+// No exception thrown — check bus.Package.IsAborted instead
+```
 
 ### Abort with Messages
 
@@ -242,6 +254,8 @@ bus.Package.IsAborted    // true
 | `.WithServices(strategy, params object[])` | Register multiple services |
 | `.WithAbortOnError()` | Abort pipeline on station error (default) |
 | `.WithNoAbortOnError()` | Continue pipeline on station error |
+| `.WithAbortOnCancel()` | Treat cancellation as a graceful abort instead of throwing |
+| `.WithNoAbortOnCancel()` | Throw on cancellation (default) |
 | `.WithStationRepeatLimit(int)` | Set max repeat iterations (default: 100) |
 | `.Go(content, callback?)` | Execute the pipeline synchronously |
 | `.GoAsync(content, token?, callback?)` | Execute the pipeline asynchronously |
@@ -283,6 +297,8 @@ bus.Package.IsAborted    // true
 - .NET 6.0
 - .NET 7.0
 - .NET 8.0
+
+*Last updated: 2026-03-21*
 
 ## License
 

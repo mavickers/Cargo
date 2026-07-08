@@ -21,6 +21,12 @@ Cargo is a lightweight Chain of Responsibility pipeline library for .NET.
 - `Go()` throws `InvalidOperationException` if the pipeline contains async stations.
 - Stations inherit from `Station<T>` (sync) or `StationAsync<T>` (async), both sharing `StationBase<T>`.
 
+## Releasing
+
+- Versioning is managed by Nerdbank.GitVersioning (`version.json`). Only bump major/minor manually; patch auto-increments from commit count.
+- After a PR is merged, ask the user if they want to tag a release.
+- To release: build to get the Nerdbank version (`dotnet build Cargo/Cargo.csproj --configuration Release`, check the `.nupkg` filename), tag with that version, and push the tag. The GitHub Action handles the NuGet publish.
+
 ## Test Organization
 
 - `Integration/` — Full pipeline scenario tests

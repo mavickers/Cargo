@@ -25,6 +25,7 @@ namespace LightPath.Cargo
         private ConcurrentQueue<Type> _stations { get; } = new ConcurrentQueue<Type>();
         private ConcurrentDictionary<Type, object> _services { get; } = new ConcurrentDictionary<Type, object>();
         private bool _withAbortOnError { get; set; } = true;
+        private bool _withAbortOnCancel { get; set; } = false;
 
         public Package<TContent> Package => _package;
 
@@ -73,53 +74,69 @@ namespace LightPath.Cargo
 
             while (currentStationIndex < stationList.Count)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
                 var stationType = stationList[currentStationIndex];
                 var isLastStation = stationList[currentStationIndex] == stationList.Last();
-                var isAsync = IsAsyncStationType(stationType);
-                var currentStation = Activator.CreateInstance(stationList[currentStationIndex]);
-                var stationPrefix = $"{stationList[currentStationIndex].FullName}";
 
-                if (currentStation == null) throw new Exception($"Unable to instantiate {stationList[currentStationIndex].FullName}");
-
-                packageProperty.SetValue(currentStation, _package);
-
-                try
+                if (cancellationToken.IsCancellationRequested && !(_withAbortOnCancel && isLastStation && hasFinalStation))
                 {
-                    if (iteration > _stationRepeatLimit) throw new OverflowException("Bus.Go failed - station execution iterations exceeded repeat limit");
+                    if (!_withAbortOnCancel) throw new OperationCanceledException(cancellationToken);
 
-                    _package.Trace();
-                    _package.Trace($"{stationPrefix} begin");
+                    var cancelException = new OperationCanceledException(cancellationToken);
+                    var action = Station.Action.Abort(cancelException);
+                    var result = Station.Result.New(stationType, action, Failed, cancelException);
 
-                    Station.Action action;
-
-                    if (isAsync)
-                    {
-                        var task = (Task<Station.Action>)asyncProcessMethod.Invoke(currentStation, null);
-                        action = await task.ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        action = (Station.Action)syncProcessMethod.Invoke(currentStation, null);
-                    }
-
-                    var result = Station.Result.New(stationType, action, Succeeded);
-
-                    _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
                     _package.Results.Enqueue(result);
                 }
-                catch (Exception exception)
+                else
                 {
-                    var actualException = exception;
-                    if (actualException is TargetInvocationException tie && tie.InnerException != null) actualException = tie.InnerException;
-                    if (actualException is AggregateException ae && ae.InnerExceptions.Count == 1) actualException = ae.InnerExceptions[0];
+                    var isAsync = IsAsyncStationType(stationType);
+                    var currentStation = Activator.CreateInstance(stationList[currentStationIndex]);
+                    var stationPrefix = $"{stationList[currentStationIndex].FullName}";
 
-                    var action = _withAbortOnError ? Station.Action.Abort(actualException) : Station.Action.Next(actualException);
-                    var result = Station.Result.New(stationType, action, Failed, actualException);
+                    if (currentStation == null) throw new Exception($"Unable to instantiate {stationList[currentStationIndex].FullName}");
 
-                    _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
-                    _package.Results.Enqueue(result);
+                    packageProperty.SetValue(currentStation, _package);
+
+                    try
+                    {
+                        if (iteration > _stationRepeatLimit) throw new OverflowException("Bus.Go failed - station execution iterations exceeded repeat limit");
+
+                        _package.Trace();
+                        _package.Trace($"{stationPrefix} begin");
+
+                        Station.Action action;
+
+                        if (isAsync)
+                        {
+                            var task = (Task<Station.Action>)asyncProcessMethod.Invoke(currentStation, null);
+                            action = await task.ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            action = (Station.Action)syncProcessMethod.Invoke(currentStation, null);
+                        }
+
+                        var result = Station.Result.New(stationType, action, Succeeded);
+
+                        _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
+                        _package.Results.Enqueue(result);
+                    }
+                    catch (Exception exception)
+                    {
+                        var actualException = exception;
+                        if (actualException is TargetInvocationException tie && tie.InnerException != null) actualException = tie.InnerException;
+                        if (actualException is AggregateException ae && ae.InnerExceptions.Count == 1) actualException = ae.InnerExceptions[0];
+                        if (actualException is OperationCanceledException oce && cancellationToken.IsCancellationRequested)
+                        {
+                            if (!_withAbortOnCancel) throw new OperationCanceledException(oce.Message, oce, cancellationToken);
+                        }
+
+                        var action = _withAbortOnError ? Station.Action.Abort(actualException) : Station.Action.Next(actualException);
+                        var result = Station.Result.New(stationType, action, Failed, actualException);
+
+                        _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
+                        _package.Results.Enqueue(result);
+                    }
                 }
 
                 var isRepeating = _package.LastStationResult?.IsRepeating ?? false;
@@ -159,6 +176,18 @@ namespace LightPath.Cargo
         public Bus<TContent> WithNoAbortOnError()
         {
             _withAbortOnError = false;
+            return this;
+        }
+
+        public Bus<TContent> WithAbortOnCancel()
+        {
+            _withAbortOnCancel = true;
+            return this;
+        }
+
+        public Bus<TContent> WithNoAbortOnCancel()
+        {
+            _withAbortOnCancel = false;
             return this;
         }
 
