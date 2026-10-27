@@ -367,6 +367,23 @@ The library targets `netstandard2.0`, so it runs on any compatible runtime, incl
 - .NET Core 2.0+
 - .NET 5, 6, 7, 8 and later
 
+## Releasing
+
+Every merge to `master` publishes a new version of `LightPath.Cargo` to nuget.org. There is no manual publish step and no local tool to run.
+
+The workflow in `.github/workflows/publish.yml` runs on each push to `master`:
+
+1. Nerdbank.GitVersioning computes the version from `version.json` and the commit height. The major and minor parts come from the `version` field in `version.json`; the patch part increments with each commit. Only builds from `master` get a clean version number. Builds from other branches get a `-g<sha>` prerelease suffix and are never published.
+2. The solution is built in Release configuration and the tests run on net8.0.
+3. `dotnet pack` produces the `.nupkg` file.
+4. `NuGet/login` exchanges the workflow's GitHub OIDC token for a short-lived nuget.org key. This is NuGet Trusted Publishing. The repo holds no NuGet API key, and nothing expires.
+5. `dotnet nuget push` uploads the package. A version that already exists on nuget.org is skipped instead of failing.
+6. A GitHub Release is created for the version, which also creates the git tag.
+
+The Trusted Publishing policy is managed on nuget.org under the account that owns the package. It is bound to the GitHub repository owner, the repository name, the workflow file name, and the package ID. Renaming the repository or the workflow file, or adding a GitHub `environment:` to the publish job, stops the push until the policy is updated to match.
+
+To change the major or minor version, edit the `version` field in `version.json` in the same pull request as the change that needs it.
+
 ## License
 
 [MIT](Cargo/license.md) - LightPath Solutions, LLC

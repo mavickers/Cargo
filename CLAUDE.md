@@ -25,7 +25,7 @@ Cargo is a lightweight Chain of Responsibility pipeline library for .NET.
 ## Releasing
 
 - Versioning is managed by Nerdbank.GitVersioning (`version.json`). Only bump major/minor manually (edit `version.json`'s `version` field); patch auto-increments from commit height. Off-master builds carry a `-g<sha>` prerelease suffix; master builds (per `publicReleaseRefSpec`) are clean.
-- **Publishing is fully automated.** Every merge to `master` triggers `.github/workflows/publish.yml`, which builds, tests (net8.0), packs, pushes to nuget.org (`--skip-duplicate`), then tags the commit with the published version and pushes the tag. Master is fed only by release-worthy PR merges — so merging a PR is the release.
+- **Publishing is fully automated.** Every merge to `master` triggers `.github/workflows/publish.yml`, which builds, tests (net8.0), packs, pushes to nuget.org (`--skip-duplicate`), then creates a GitHub Release named for the published version, which creates the tag. Master is fed only by release-worthy PR merges — so merging a PR is the release. The README's Releasing section describes the same flow for contributors; keep the two in step.
 - No manual tagging or local push needed. To cut a release: merge the PR to master. To do a major/minor bump, land a `version.json` edit in that PR.
 - The push uses NuGet Trusted Publishing (`NuGet/login` exchanges the GitHub OIDC token for a short-lived key), so there is no API key secret to rotate. The policy lives under the `mavickers` account on nuget.org and is bound to owner `mavickers`, repo `Cargo`, workflow `publish.yml`, package `LightPath.Cargo`. Renaming the repo or workflow file, or adding an `environment:` to the job, breaks the push until the policy is updated.
 
