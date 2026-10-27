@@ -18,6 +18,9 @@ concurrency:
 
 jobs:
   publish:
+    # workflow_dispatch has no branch filter; this keeps a manual run from
+    # another branch from publishing a -g<sha> prerelease.
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
 
     steps:

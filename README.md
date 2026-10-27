@@ -373,7 +373,7 @@ Every merge to `master` publishes a new version of `LightPath.Cargo` to nuget.or
 
 The workflow in `.github/workflows/publish.yml` runs on each push to `master`:
 
-1. Nerdbank.GitVersioning computes the version from `version.json` and the commit height. The major and minor parts come from the `version` field in `version.json`; the patch part increments with each commit. Only builds from `master` get a clean version number. Builds from other branches get a `-g<sha>` prerelease suffix and are never published.
+1. Nerdbank.GitVersioning computes the version from `version.json` and the commit height. The major and minor parts come from the `version` field in `version.json`; the patch part increments with each commit. Only builds from `master` get a clean version number. Builds from other branches get a `-g<sha>` prerelease suffix. The publish job runs only when the ref is `master`, so a manual run of the workflow from another branch exits without publishing.
 2. The solution is built in Release configuration and the tests run on net8.0.
 3. `dotnet pack` produces the `.nupkg` file.
 4. `NuGet/login` exchanges the workflow's GitHub OIDC token for a short-lived nuget.org key. This is NuGet Trusted Publishing. The repo holds no NuGet API key, and nothing expires.
