@@ -333,6 +333,7 @@ namespace LightPath.Cargo
             if (stationBase == null) return $"Type '{stationType.FullName}' does not inherit from {expected}";
             if (stationBase.GetGenericArguments()[0] != typeof(TContent)) return $"Type '{stationType.FullName}' inherits from {stationBase.Name.Split('`')[0]}<{stationBase.GetGenericArguments()[0].Name}>, not {expected}";
             if (stationType.IsAbstract || stationType.GetConstructor(Type.EmptyTypes) == null) return $"Type '{stationType.FullName}' must be concrete with a public parameterless constructor";
+            if (stationType.ContainsGenericParameters) return $"Type '{stationType.FullName}' is an open generic type; register a closed type";
 
             return null;
         }

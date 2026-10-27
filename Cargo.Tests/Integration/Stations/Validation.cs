@@ -43,6 +43,14 @@ namespace LightPath.Cargo.Tests.Integration.Stations
         {
         }
 
+        public class OpenGenericStation<TUnused> : Station<ContentModel1>
+        {
+            public override Station.Action Process()
+            {
+                return Station.Action.Next();
+            }
+        }
+
         public class OkStation : Station<ContentModel2>
         {
             public override Station.Action Process()

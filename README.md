@@ -179,7 +179,7 @@ var bus = Bus.New<OrderContext>()
 
 A station constructor that throws is handled the same way as a `Process()` that throws: the station records a failed result and the pipeline follows the abort-on-error setting, so the final station still runs.
 
-Registration is validated up front. `WithStation<T>()` and `WithFinalStation<T>()` throw `ArgumentException` when the type does not derive from `Station<T>`/`StationAsync<T>` for the bus's content type, is abstract, or has no public parameterless constructor. `WithStations(params Type[])` skips a type that is not a station at all, but still throws for a station that is abstract, has no parameterless constructor, or has the wrong content type.
+Registration is validated up front. `WithStation<T>()` and `WithFinalStation<T>()` throw `ArgumentException` when the type does not derive from `Station<T>`/`StationAsync<T>` for the bus's content type, is abstract, or has no public parameterless constructor. `WithStations(params Type[])` skips a type that is not a station at all, but still throws for a station that is abstract, open generic, has no parameterless constructor, or has the wrong content type.
 
 ### Station Repeat
 
@@ -326,7 +326,7 @@ bus.Package.IsAborted    // true
 | `Repeat(Exception)` | Repeat with an exception |
 | `.WithMessage(string)` | Attach a message to any action |
 | `.WithException(Exception)` | Attach an exception to any action |
-| `.WithDelay(TimeSpan)` | Wait before the repeat runs the station again |
+| `.WithDelay(TimeSpan)` | Wait before the repeat runs the station again; zero to `int.MaxValue` milliseconds, otherwise `ArgumentOutOfRangeException` |
 | `ActionType` / `ActionMessage` / `ActionException` / `Delay` | Read back what was attached |
 
 ### Station.Result
