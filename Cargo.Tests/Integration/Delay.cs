@@ -149,6 +149,31 @@ namespace LightPath.Cargo.Tests.Integration
         }
 
         [Fact]
+        public void OutOfRangeDelay_FailsStationAndRunsFinalStation()
+        {
+            var content = new ContentModel2();
+            var bus = Bus.New<ContentModel2>()
+                         .WithStation<OutOfRangeDelayStation>()
+                         .WithFinalStation<FinalStation>();
+
+            bus.Go(content);
+
+            var failure = bus.Package.Results.Single(r => r.Station == typeof(OutOfRangeDelayStation));
+
+            Assert.True(failure.WasFailure);
+            Assert.IsType<ArgumentOutOfRangeException>(failure.Exception);
+            Assert.Equal(100, content.IntVal);
+        }
+
+        [Fact]
+        public void WithDelay_Zero_IsAccepted()
+        {
+            var action = Station.Action.Repeat().WithDelay(TimeSpan.Zero);
+
+            Assert.Equal(TimeSpan.Zero, action.Delay);
+        }
+
+        [Fact]
         public void NextWithDelay_DoesNotWait()
         {
             var content = new ContentModel2();
