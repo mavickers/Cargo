@@ -12,6 +12,12 @@ namespace LightPath.Cargo
         protected Package<TContent> Package => _package;
         protected Station.Result LastResult => _package.Results.Last();
 
+        /// <summary>
+        /// Maximum consecutive runs of this station before the bus records an OverflowException.
+        /// Null uses the bus-wide WithStationRepeatLimit. Read from a fresh instance on every run, after Package is set.
+        /// </summary>
+        protected virtual int? RepeatLimit => null;
+
         public bool IsErrored => _package.IsErrored;
         public IList<Station.Result> PackageResults => _package.Results.ToList().AsReadOnly();
 

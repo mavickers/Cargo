@@ -17,6 +17,7 @@ namespace LightPath.Cargo
             }
 
             private string _actionMessage { get; set; }
+            private TimeSpan _delay { get; set; }
             private Exception _exception { get; set; }
 
             private ActionTypes _type { get; }
@@ -25,10 +26,12 @@ namespace LightPath.Cargo
             public string ActionMessage => _actionMessage;
 
             public ActionTypes ActionType => _type;
+            public TimeSpan Delay => _delay;
 
             private Action(ActionTypes type)
             {
                 _actionMessage = null;
+                _delay = TimeSpan.Zero;
                 _exception = null;
                 _type = type;
             }
@@ -42,6 +45,14 @@ namespace LightPath.Cargo
             public static Action Repeat() => new Action(ActionTypes.Repeat);
             public static Action Repeat(Exception repeatException) => Repeat().WithException(repeatException);
             public static Action Repeat(string repeatMessage) => Repeat().WithMessage(repeatMessage);
+
+            /// <summary>Only meaningful on Repeat: the bus waits this long (cancellable) before rerunning the station.</summary>
+            public Action WithDelay(TimeSpan delay)
+            {
+                _delay = delay;
+
+                return this;
+            }
 
             public Action WithException(Exception exception)
             {
@@ -71,9 +82,12 @@ namespace LightPath.Cargo
             internal Output _output { get; }
             internal Exception _exception { get; }
 
+            public TimeSpan ActionDelay => _action.Delay;
             public Exception ActionException => _action.ActionException;
             public string ActionMessage => _action.ActionMessage;
+            public TimeSpan Elapsed { get; internal set; }
             public Exception Exception => _exception;
+            public int Iteration { get; internal set; }
             public Type Station => _station;
             public bool IsAborting => _action.ActionType == Action.ActionTypes.Abort;
             public bool IsRepeating => _action.ActionType == Action.ActionTypes.Repeat;

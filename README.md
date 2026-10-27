@@ -88,8 +88,9 @@ var result = Bus.New<OrderContext>()
 - **Mixed pipelines** — freely interleave sync and async stations in the same pipeline
 - **Services** — register and inject dependencies into stations
 - **Error handling** — abort on error (default) or continue with error state
-- **Station repeat** — stations can repeat themselves until a condition is met
+- **Station repeat** — stations can repeat themselves until a condition is met, with an optional delay and a per-station limit
 - **Final station** — a station that always runs, even after an abort
+- **Observers** — receive a callback as each station starts and finishes, with iteration and elapsed time
 - **Cancellation** — pass a `CancellationToken` to `GoAsync()`, accessible via `Package.CancellationToken`. Optionally treat cancellation as a graceful abort instead of an exception.
 - **Tracing** — built-in trace messages for pipeline execution
 - **Result tracking** — inspect results from each station via `Package.Results`
@@ -176,6 +177,10 @@ var bus = Bus.New<OrderContext>()
 // Check Package.IsErrored or LastResult.WasFailure to inspect error state.
 ```
 
+A station constructor that throws is handled the same way as a `Process()` that throws: the station records a failed result and the pipeline follows the abort-on-error setting, so the final station still runs.
+
+Registration is validated up front. `WithStation<T>()` and `WithFinalStation<T>()` throw `ArgumentException` when the type does not derive from `Station<T>`/`StationAsync<T>` for the bus's content type, is abstract, or has no public parameterless constructor. `WithStations(params Type[])` skips a type that is not a station at all, but still throws for a station that is abstract, has no parameterless constructor, or has the wrong content type.
+
 ### Station Repeat
 
 A station can repeat itself until a condition is met:
@@ -195,13 +200,56 @@ public class RetryableStation : Station<OrderContext>
 }
 ```
 
-Set a repeat limit to prevent infinite loops (default is 100):
+Set a repeat limit to prevent infinite loops (default is 100). When the limit is reached, the station records a failed result with an `OverflowException` and the pipeline follows the abort-on-error setting:
 
 ```csharp
 var bus = Bus.New<OrderContext>()
     .WithStationRepeatLimit(10)
     .WithStation<RetryableStation>();
 ```
+
+A station can set its own limit by overriding `RepeatLimit`. The override replaces the bus-wide value for that station only; returning `null` keeps the bus-wide value. It is read from a new instance on every run, after `Package` is set, so it can depend on the content:
+
+```csharp
+public class PollStation : Station<OrderContext>
+{
+    protected override int? RepeatLimit => Package.Contents.MaxPolls;
+
+    public override Station.Action Process() { ... }
+}
+```
+
+To wait before the next attempt, add a delay to the repeat action. The bus waits (honoring the cancellation token) and then runs the station again. The delay is ignored on `Next` and `Abort`. A delay also works under the synchronous `Go()`, which blocks the calling thread for the delay; the rest of the run then continues on a thread-pool thread, not the calling thread:
+
+```csharp
+return Station.Action.Repeat("Not ready").WithDelay(TimeSpan.FromSeconds(5));
+```
+
+Cancellation during the delay is handled like cancellation between stations: by default `OperationCanceledException` is thrown; with `WithAbortOnCancel()` an abort result is recorded and the final station runs. The final station runs once after cancellation; if it returns `Repeat`, the repeat is recorded as the abort result instead of running again.
+
+### Observing Stations
+
+To react as each station starts and finishes — for live progress output, logging, or timing — register an observer:
+
+```csharp
+public class ConsoleObserver : IStationObserver
+{
+    public void Starting(Type station, int iteration)
+        => Console.WriteLine($"{station.Name} (attempt {iteration})");
+
+    public void Finished(Station.Result result)
+        => Console.WriteLine($"  {(result.WasSuccess ? "ok" : "failed")} in {result.Elapsed.TotalMilliseconds:F0} ms");
+}
+
+var bus = Bus.New<OrderContext>()
+    .WithStationObserver(new ConsoleObserver())
+    .WithStation<FetchStation>()
+    .WithStation<DeployStation>();
+```
+
+`Starting` fires before each run; `iteration` starts at 1 and counts repeats of the same station. `Finished` fires after each result is recorded, including the abort result that `WithAbortOnCancel()` records for a cancelled station (for which `Starting` does not fire, and whose `Elapsed` is zero). `Starting` also fires for the attempt that exceeds the repeat limit; that attempt records the `OverflowException` result without running `Process()`. Every `Station.Result` carries `Iteration` and `Elapsed`; `Elapsed` is measured from after `Starting` returns and includes station construction.
+
+The observer runs outside the station's error handling. An exception thrown by the observer escapes `Go()`/`GoAsync()` unchanged; it is never recorded as a station failure.
 
 ### Cancellation
 
@@ -259,6 +307,7 @@ bus.Package.IsAborted    // true
 | `.WithAbortOnCancel()` | Treat cancellation as a graceful abort instead of throwing |
 | `.WithNoAbortOnCancel()` | Throw on cancellation (default) |
 | `.WithStationRepeatLimit(int)` | Set max repeat iterations (default: 100) |
+| `.WithStationObserver(IStationObserver)` | Receive a callback as each station starts and finishes |
 | `.Go(content, callback?)` | Execute the pipeline synchronously |
 | `.GoAsync(content, token?, callback?)` | Execute the pipeline asynchronously |
 
@@ -275,6 +324,23 @@ bus.Package.IsAborted    // true
 | `Repeat()` | Repeat the current station |
 | `Repeat(string)` | Repeat with a message |
 | `Repeat(Exception)` | Repeat with an exception |
+| `.WithMessage(string)` | Attach a message to any action |
+| `.WithException(Exception)` | Attach an exception to any action |
+| `.WithDelay(TimeSpan)` | Wait before the repeat runs the station again |
+| `ActionType` / `ActionMessage` / `ActionException` / `Delay` | Read back what was attached |
+
+### Station.Result
+
+| Member | Description |
+|--------|-------------|
+| `Station` | The station type that produced the result |
+| `WasSuccess` / `WasFailure` | Whether the station completed or threw |
+| `IsAborting` / `IsRepeating` | Whether the returned action was `Abort` or `Repeat` |
+| `ActionMessage` / `ActionException` | The message or exception attached to the action |
+| `ActionDelay` | The delay attached to a `Repeat` action |
+| `Exception` | The exception that failed the station, if any |
+| `Iteration` | 1 for a first run, higher on each repeat of the same station |
+| `Elapsed` | Wall-clock time for the run, including construction; zero for a cancellation abort result |
 
 ### Station Members
 
@@ -286,6 +352,7 @@ bus.Package.IsAborted    // true
 | `IsErrored` | Whether any station has errored |
 | `LastResult` | The result from the previous station |
 | `PackageResults` | All station results so far |
+| `RepeatLimit` | Override to set this station's repeat limit; `null` (default) uses the bus-wide limit. A station member of the same name that is not an override hides it and is ignored by the bus |
 | `Messages` | Trace messages |
 | `GetService<T>()` | Get a registered service |
 | `HasService<T>()` | Check if a service is registered |
