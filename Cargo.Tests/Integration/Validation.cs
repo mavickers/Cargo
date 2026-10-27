@@ -41,6 +41,14 @@ namespace LightPath.Cargo.Tests.Integration
         }
 
         [Fact]
+        public void WithStations_OpenGenericStation_Throws()
+        {
+            var bus = Bus.New<ContentModel1>();
+
+            Assert.Throws<ArgumentException>(() => bus.WithStations(typeof(OpenGenericStation<>)));
+        }
+
+        [Fact]
         public void WithStations_MisconfiguredStation_Throws()
         {
             var bus = Bus.New<ContentModel2>();

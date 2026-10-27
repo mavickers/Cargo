@@ -35,6 +35,14 @@ namespace LightPath.Cargo.Tests.Integration.Stations
             }
         }
 
+        public class OutOfRangeDelayStation : Station<ContentModel2>
+        {
+            public override Station.Action Process()
+            {
+                return Station.Action.Repeat().WithDelay(TimeSpan.FromDays(100));
+            }
+        }
+
         public class LongDelayStation : Station<ContentModel2>
         {
             public override Station.Action Process()

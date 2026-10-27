@@ -46,9 +46,14 @@ namespace LightPath.Cargo
             public static Action Repeat(Exception repeatException) => Repeat().WithException(repeatException);
             public static Action Repeat(string repeatMessage) => Repeat().WithMessage(repeatMessage);
 
-            /// <summary>Only meaningful on Repeat: the bus waits this long (cancellable) before rerunning the station.</summary>
+            /// <summary>
+            /// Only meaningful on Repeat: the bus waits this long (cancellable) before rerunning the station.
+            /// Validated here, inside Process, so an out-of-range value fails the station instead of escaping the bus from Task.Delay.
+            /// </summary>
             public Action WithDelay(TimeSpan delay)
             {
+                if (delay < TimeSpan.Zero || delay.TotalMilliseconds > int.MaxValue) throw new ArgumentOutOfRangeException(nameof(delay), delay, "Delay must be between zero and int.MaxValue milliseconds");
+
                 _delay = delay;
 
                 return this;
