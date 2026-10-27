@@ -27,7 +27,7 @@ Cargo is a lightweight Chain of Responsibility pipeline library for .NET.
 - Versioning is managed by Nerdbank.GitVersioning (`version.json`). Only bump major/minor manually (edit `version.json`'s `version` field); patch auto-increments from commit height. Off-master builds carry a `-g<sha>` prerelease suffix; master builds (per `publicReleaseRefSpec`) are clean.
 - **Publishing is fully automated.** Every merge to `master` triggers `.github/workflows/publish.yml`, which builds, tests (net8.0), packs, pushes to nuget.org (`--skip-duplicate`), then tags the commit with the published version and pushes the tag. Master is fed only by release-worthy PR merges — so merging a PR is the release.
 - No manual tagging or local push needed. To cut a release: merge the PR to master. To do a major/minor bump, land a `version.json` edit in that PR.
-- The push uses the `NUGET_API_KEY` repository secret (nuget.org keys expire after at most one year; regenerate on nuget.org and update the secret when the publish job fails on the push step).
+- The push uses NuGet Trusted Publishing (`NuGet/login` exchanges the GitHub OIDC token for a short-lived key), so there is no API key secret to rotate. The policy lives under the `mavickers` account on nuget.org and is bound to owner `mavickers`, repo `Cargo`, workflow `publish.yml`, package `LightPath.Cargo`. Renaming the repo or workflow file, or adding an `environment:` to the job, breaks the push until the policy is updated.
 
 ## Test Organization
 
