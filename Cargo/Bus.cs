@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -20,6 +21,7 @@ namespace LightPath.Cargo
     public class Bus<TContent> where TContent : class
     {
         private Type _finalStation { get; set; }
+        private IStationObserver _observer { get; set; }
         private Package<TContent> _package { get; set; }
         private int _stationRepeatLimit { get; set; } = 100;
         private ConcurrentQueue<Type> _stations { get; } = new ConcurrentQueue<Type>();
@@ -58,6 +60,7 @@ namespace LightPath.Cargo
             var syncProcessMethod = typeof(Station<TContent>).GetMethod("Process", BindingFlags.Public | BindingFlags.Instance);
             var asyncProcessMethod = typeof(StationAsync<TContent>).GetMethod("ProcessAsync", BindingFlags.Public | BindingFlags.Instance);
             var packageProperty = typeof(StationBase<TContent>).GetProperty("_package", BindingFlags.NonPublic | BindingFlags.Instance);
+            var repeatLimitProperty = typeof(StationBase<TContent>).GetProperty("RepeatLimit", BindingFlags.NonPublic | BindingFlags.Instance);
             var stationList = _stations.Append(_finalStation).Where(s => s != null).ToList();
             var hasFinalStation = _finalStation != null;
             var iteration = 1;
@@ -65,6 +68,7 @@ namespace LightPath.Cargo
             if (syncProcessMethod == null) throw new Exception("Bus.GoAsync failed - unable to access sync Process method");
             if (asyncProcessMethod == null) throw new Exception("Bus.GoAsync failed - unable to access async ProcessAsync method");
             if (packageProperty == null) throw new Exception("Unable to access package property");
+            if (repeatLimitProperty == null) throw new Exception("Unable to access repeat limit property");
 
             _package = Cargo.Package.New<TContent>(content, _services);
             _package.CancellationToken = cancellationToken;
@@ -75,31 +79,44 @@ namespace LightPath.Cargo
             while (currentStationIndex < stationList.Count)
             {
                 var stationType = stationList[currentStationIndex];
+                var stationPrefix = stationType.FullName;
                 var isLastStation = currentStationIndex == stationList.Count - 1;
 
-                if (cancellationToken.IsCancellationRequested && !(_withAbortOnCancel && isLastStation && hasFinalStation))
+                Station.Result result;
+
+                // under abort-on-cancel the final station gets exactly one run; a Repeat it returns after cancellation would
+                // otherwise rerun it with every delay skipped until the repeat limit, so iteration 2+ falls through to the abort
+                var runsDespiteCancel = _withAbortOnCancel && isLastStation && hasFinalStation && iteration == 1;
+
+                if (cancellationToken.IsCancellationRequested && !runsDespiteCancel)
                 {
                     if (!_withAbortOnCancel) throw new OperationCanceledException(cancellationToken);
 
                     var cancelException = new OperationCanceledException(cancellationToken);
                     var action = Station.Action.Abort(cancelException);
-                    var result = Station.Result.New(stationType, action, Failed, cancelException);
 
-                    _package.Results.Enqueue(result);
+                    result = Station.Result.New(stationType, action, Failed, cancelException);
                 }
                 else
                 {
                     var isAsync = IsAsyncStationType(stationType);
-                    var currentStation = Activator.CreateInstance(stationList[currentStationIndex]);
-                    var stationPrefix = $"{stationList[currentStationIndex].FullName}";
 
-                    if (currentStation == null) throw new Exception($"Unable to instantiate {stationList[currentStationIndex].FullName}");
+                    _observer?.Starting(stationType, iteration);
 
-                    packageProperty.SetValue(currentStation, _package);
+                    var stopwatch = Stopwatch.StartNew();
 
                     try
                     {
-                        if (iteration > _stationRepeatLimit) throw new OverflowException("Bus.Go failed - station execution iterations exceeded repeat limit");
+                        // construction sits inside the try so a throwing constructor becomes a Failed result and the final station still runs
+                        var currentStation = Activator.CreateInstance(stationType);
+
+                        if (currentStation == null) throw new Exception($"Unable to instantiate {stationType.FullName}");
+
+                        packageProperty.SetValue(currentStation, _package);
+
+                        var repeatLimit = (int?)repeatLimitProperty.GetValue(currentStation) ?? _stationRepeatLimit;
+
+                        if (iteration > repeatLimit) throw new OverflowException("Bus.Go failed - station execution iterations exceeded repeat limit");
 
                         _package.Trace();
                         _package.Trace($"{stationPrefix} begin");
@@ -116,10 +133,7 @@ namespace LightPath.Cargo
                             action = (Station.Action)syncProcessMethod.Invoke(currentStation, null);
                         }
 
-                        var result = Station.Result.New(stationType, action, Succeeded);
-
-                        _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
-                        _package.Results.Enqueue(result);
+                        result = Station.Result.New(stationType, action, Succeeded);
                     }
                     catch (Exception exception)
                     {
@@ -132,16 +146,23 @@ namespace LightPath.Cargo
                         }
 
                         var action = _withAbortOnError ? Station.Action.Abort(actualException) : Station.Action.Next(actualException);
-                        var result = Station.Result.New(stationType, action, Failed, actualException);
 
-                        _package.Trace($"{stationPrefix} finished - {action.ActionType} ({action.ActionMessage ?? "N/A"})");
-                        _package.Results.Enqueue(result);
+                        result = Station.Result.New(stationType, action, Failed, actualException);
                     }
+
+                    result.Elapsed = stopwatch.Elapsed;
+
+                    _package.Trace($"{stationPrefix} finished - {result._action.ActionType} ({result.ActionMessage ?? "N/A"}) in {result.Elapsed.TotalMilliseconds:F0} ms");
                 }
 
-                var isRepeating = _package.LastStationResult?.IsRepeating ?? false;
-                var isAborting = _package.LastStationResult?.IsAborting ?? false;
-                var wasFailure = _package.LastStationResult?.WasFailure ?? false;
+                result.Iteration = iteration;
+
+                _package.Results.Enqueue(result);
+                _observer?.Finished(result);
+
+                var isRepeating = result.IsRepeating;
+                var isAborting = result.IsAborting;
+                var wasFailure = result.WasFailure;
                 var gotoFinalStation = !isLastStation && (isAborting || (wasFailure && _withAbortOnError && hasFinalStation));
 
                 iteration = isRepeating ? iteration + 1 : 1;
@@ -152,6 +173,15 @@ namespace LightPath.Cargo
                 // otherwise increment the index
 
                 currentStationIndex += isRepeating ? 0 : gotoFinalStation ? stationList.Count - currentStationIndex - 1 : isAborting ? stationList.Count + 1 : 1;
+
+                if (isRepeating && result.ActionDelay > TimeSpan.Zero)
+                {
+                    _package.Trace($"{stationPrefix} repeat delayed {result.ActionDelay.TotalMilliseconds:F0} ms");
+
+                    // a cancellation here is handled by the IsCancellationRequested check at the top of the next loop pass
+                    try { await Task.Delay(result.ActionDelay, cancellationToken).ConfigureAwait(false); }
+                    catch (OperationCanceledException) { }
+                }
             }
 
             _package.Trace();
@@ -193,6 +223,10 @@ namespace LightPath.Cargo
 
         public Bus<TContent> WithFinalStation<TStation>()
         {
+            var invalidReason = GetInvalidStationReason(typeof(TStation));
+
+            if (invalidReason != null) throw new ArgumentException(invalidReason);
+
             _finalStation = typeof(TStation);
             return this;
         }
@@ -256,24 +290,55 @@ namespace LightPath.Cargo
             return this;
         }
 
+        /// <summary>
+        /// Receive Starting/Finished calls as each station runs. The calls happen outside the station's
+        /// error handling, so an observer that throws escapes Go/GoAsync rather than failing the station.
+        /// </summary>
+        public Bus<TContent> WithStationObserver(IStationObserver observer)
+        {
+            _observer = observer;
+            return this;
+        }
+
         public Bus<TContent> WithStationRepeatLimit(int limit)
         {
             _stationRepeatLimit = limit;
             return this;
         }
 
+        /// <summary>
+        /// With throwOnInvalid false (WithStations) a type that is not a station at all is skipped;
+        /// a station that is misconfigured still throws, so a setup error never disappears silently.
+        /// </summary>
         private void WithStation(Type stationType, bool throwOnInvalid = true)
         {
-            if (!IsValidStationType(stationType))
-            {
-                if (throwOnInvalid) throw new ArgumentException($"Type '{stationType.FullName}' does not inherit from Station<{typeof(TContent).Name}> or StationAsync<{typeof(TContent).Name}>");
-                return;
-            }
+            if (!throwOnInvalid && GetStationBaseType(stationType) == null) return;
+
+            var invalidReason = GetInvalidStationReason(stationType);
+
+            if (invalidReason != null) throw new ArgumentException(invalidReason);
 
             _stations.Enqueue(stationType);
         }
 
-        private static bool IsValidStationType(Type stationType)
+        /// <summary>
+        /// Null when the type can run on this bus. The content-type and constructor checks catch at
+        /// registration what would otherwise surface as a reflection exception from Go.
+        /// </summary>
+        private static string GetInvalidStationReason(Type stationType)
+        {
+            var stationBase = GetStationBaseType(stationType);
+            var expected = $"Station<{typeof(TContent).Name}> or StationAsync<{typeof(TContent).Name}>";
+
+            if (stationBase == null) return $"Type '{stationType.FullName}' does not inherit from {expected}";
+            if (stationBase.GetGenericArguments()[0] != typeof(TContent)) return $"Type '{stationType.FullName}' inherits from {stationBase.Name.Split('`')[0]}<{stationBase.GetGenericArguments()[0].Name}>, not {expected}";
+            if (stationType.IsAbstract || stationType.GetConstructor(Type.EmptyTypes) == null) return $"Type '{stationType.FullName}' must be concrete with a public parameterless constructor";
+
+            return null;
+        }
+
+        /// <summary>The closed Station&lt;T&gt; or StationAsync&lt;T&gt; in the type's base chain, or null.</summary>
+        private static Type GetStationBaseType(Type stationType)
         {
             var current = stationType;
 
@@ -282,13 +347,13 @@ namespace LightPath.Cargo
                 if (current.IsGenericType)
                 {
                     var genericDef = current.GetGenericTypeDefinition();
-                    if (genericDef == typeof(Station<>) || genericDef == typeof(StationAsync<>)) return true;
+                    if (genericDef == typeof(Station<>) || genericDef == typeof(StationAsync<>)) return current;
                 }
 
                 current = current.BaseType;
             }
 
-            return false;
+            return null;
         }
 
         private static bool IsAsyncStationType(Type stationType)
