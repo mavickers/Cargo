@@ -1,4 +1,5 @@
-﻿using LightPath.Cargo.Tests.Integration.Common;
+﻿using System;
+using LightPath.Cargo.Tests.Integration.Common;
 using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
@@ -102,40 +103,34 @@ namespace LightPath.Cargo.Tests.Integration
         }
 
         /// <summary>
-        /// Scenario2 repeats Scenario1 but uses an interface for the bus
-        /// package type and implementations of the interface as station
-        /// package types.
+        /// Scenario2 uses an interface for the bus package type and
+        /// registers a station typed to the implementation; registration
+        /// throws ArgumentException because the content types differ.
         /// </summary>
         [Fact]
         public void Scenario2()
         {
-            var content = new ContentModel3();
             var bus = Bus.New<IContentModel3>()
                          .WithStation<Station4>()
                          .WithStation<Station5>()
-                         .WithStation<Station6>()
-                         .WithStation<Station7>();
+                         .WithStation<Station6>();
 
-            Assert.Throws<System.Reflection.TargetException>(() => bus.Go(content));
+            Assert.Throws<ArgumentException>(() => bus.WithStation<Station7>());
         }
 
         /// <summary>
-        /// Scenario2 repeats Scenario1 but uses an interface for the bus
-        /// package type and implementations of the interface as station
-        /// package types.
+        /// Scenario3 uses the implementation for the bus package type and
+        /// registers a station typed to the interface; registration throws
+        /// ArgumentException because the content types differ.
         /// </summary>
         [Fact]
         public void Scenario3()
         {
-            var content = new ContentModel3();
             var bus = Bus.New<ContentModel3>()
-                         .WithStation<Station4>()
-                         .WithStation<Station5>()
-                         .WithStation<Station6>()
                          .WithStation<Station7>();
 
             // maybe someday we can mix interfaces/implementation in the stations
-            Assert.Throws<System.Reflection.TargetException>(() => bus.Go(content));
+            Assert.Throws<ArgumentException>(() => bus.WithStation<Station4>());
         }
 
         [Fact]
